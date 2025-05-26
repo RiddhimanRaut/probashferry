@@ -32,9 +32,21 @@ logoutBtn.onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, user => {
   const logged = !!user;
-  loginBtn.hidden  = logged;
+  
+  // Force reflow of DOM to ensure proper display
+  loginBtn.style.display = 'none';
+  logoutBtn.style.display = 'none';
+  
+  // Set visibility states
+  loginBtn.hidden = logged;
   logoutBtn.hidden = !logged;
   welcomeMsg.hidden = !logged;
+  
+  // Reset display to default/flex after a slight delay to ensure DOM updates
+  setTimeout(() => {
+    loginBtn.style.display = logged ? 'none' : 'flex';
+    logoutBtn.style.display = logged ? 'flex' : 'none';
+  }, 10);
   
   if (logged) {
     console.log(`Logged in as ${user.displayName}`);
@@ -46,7 +58,30 @@ onAuthStateChanged(auth, user => {
 });
 /* ---------- end Firebase block ---------- */
 
+// Function to force refresh UI state if there are issues with button visibility
+function forceRefreshUI() {
+  const logged = auth.currentUser !== null;
+  loginBtn.hidden = logged;
+  logoutBtn.hidden = !logged;
+  welcomeMsg.hidden = !logged;
+  
+  loginBtn.style.display = logged ? 'none' : 'flex';
+  logoutBtn.style.display = logged ? 'flex' : 'none';
+  
+  // Re-apply first name if logged in
+  if (logged && auth.currentUser.displayName) {
+    const firstName = auth.currentUser.displayName.split(' ')[0];
+    userName.textContent = firstName;
+  }
+}
 
+// Call this function when page loads to ensure correct UI state
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(forceRefreshUI, 500);
+});
+
+// Handle focus events - sometimes helps with cached UI states
+window.addEventListener('focus', forceRefreshUI);
 
 /* ---------- wheel: translate vertical wheel-scroll to horizontal ---------- */
 document.querySelector('.h-scroll').addEventListener('wheel', e=>{
