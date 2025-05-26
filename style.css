@@ -1,29 +1,71 @@
-/* --- base --- */
+/* ---------- base reset ---------- */
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif;}
-body{overflow:hidden;}                 /* prevent vertical scroll when wheel active */
+body{margin:0;}   /* we no longer lock scrolling here */
 
-/* --- panels --- */
-.panel{width:100vw;height:100vh;display:flex;flex-direction:column;
-       justify-content:center;align-items:center;text-align:center;}
-.hero{background:url(images/cover.jpg) center/cover no-repeat;color:#fff;}
+/* ---------- horizontal strip (hero + wheel) ---------- */
+.h-scroll{
+  display:flex;               /* hero | wheel |  future panels */
+  flex-direction:row;
+  width:100vw; height:100vh;
+  overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+}
+.h-scroll::-webkit-scrollbar{display:none;}  /* hide scrollbar */
+
+/* every direct child of .h-scroll fills one screen */
+.panel{
+  flex:0 0 100vw;             /* no grow, no shrink */
+  height:100vh;
+  scroll-snap-align:start;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;
+}
+
+/* ---------- cover panel ---------- */
+.hero{
+  background:url(images/cover.jpg) center/cover no-repeat, #000;
+  color:#fff; position:relative;
+}
+.hero::after{                 /* dark overlay so white text is visible */
+  content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);
+}
+.hero h1,.hero p,.hero .cue{position:relative;}  /* above overlay */
 .cue{position:absolute;bottom:2rem;font-size:1rem;opacity:.7;}
 
-/* --- horizontal wheel --- */
-.h-scroll{display:flex;gap:1rem;padding:2rem;height:100vh;width:100vw;
-          overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;}
-.h-scroll::-webkit-scrollbar{display:none;}
+/* ---------- wheel (holds the cards) ---------- */
+.wheel{
+  display:flex;align-items:center;
+  gap:1rem;padding:2rem;
+}
 
-/* cards */
-.card{flex:0 0 240px;background:#fff;border-radius:12px;box-shadow:0 4px 10px rgb(0 0 0 /.15);
-      scroll-snap-align:start;cursor:pointer;transition:transform .25s;}
+/* ---------- cards ---------- */
+.card{
+  flex:0 0 240px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,.15);
+  cursor:pointer;
+  transition:transform .25s;
+}
 .card:hover{transform:scale(1.05);}
-.card img{width:100%;height:140px;object-fit:cover;border-radius:12px 12px 0 0;}
+.card img{
+  width:100%;height:140px;object-fit:cover;border-radius:12px 12px 0 0;
+}
 .card h2{font-size:1.1rem;margin:.75rem;}
 .card p{font-size:.85rem;padding:0 .75rem 1rem;color:#555;}
 
-/* --- expanded article --- */
-.article{position:fixed;inset:0;background:#fff;overflow-y:auto;padding:3rem 1.5rem;
-         transform:scale(.3);opacity:0;pointer-events:none;
-         transition:transform .4s cubic-bezier(.4,.14,.3,1),opacity .25s;}
+/* ---------- expanded article ---------- */
+.article{
+  position:fixed;inset:0;
+  background:#fff;
+  overflow-y:auto;
+  padding:3rem 1.5rem;
+  transform:scale(.3);opacity:0;pointer-events:none;
+  transition:transform .4s cubic-bezier(.4,.14,.3,1),opacity .25s;
+}
 .article.open{transform:scale(1);opacity:1;pointer-events:auto;}
-.close{position:absolute;top:1rem;right:1rem;font-size:2rem;background:none;border:none;cursor:pointer;}
+.close{
+  position:absolute;top:1rem;right:1rem;
+  font-size:2rem;background:none;border:none;cursor:pointer;
+}
