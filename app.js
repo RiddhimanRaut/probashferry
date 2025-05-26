@@ -21,9 +21,11 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-/* buttons from index.html */
+/* elements from index.html */
 const loginBtn  = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const welcomeMsg = document.getElementById('welcomeMsg');
+const userName = document.getElementById('userName');
 
 loginBtn.onclick  = () => signInWithPopup(auth, provider);
 logoutBtn.onclick = () => signOut(auth);
@@ -32,7 +34,15 @@ onAuthStateChanged(auth, user => {
   const logged = !!user;
   loginBtn.hidden  = logged;
   logoutBtn.hidden = !logged;
-  if (logged) console.log(`Logged in as ${user.displayName}`);
+  welcomeMsg.hidden = !logged;
+  
+  if (logged) {
+    console.log(`Logged in as ${user.displayName}`);
+    
+    // Extract first name from displayName (assumes format is "First Last")
+    const firstName = user.displayName.split(' ')[0];
+    userName.textContent = firstName;
+  }
 });
 /* ---------- end Firebase block ---------- */
 
