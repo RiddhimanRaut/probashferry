@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  
+  <meta charset="UTF-8">
+  <title>Probash Ferry - Debug Mode</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="assets/css/fontawesome-all.min.css">
+  <link rel="stylesheet" href="style.css?v=1.1">
+  <style>
+    /* Debug mode styles */
+    .debug-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #bada55;
+      padding: 15px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-family: monospace;
+      max-width: 90%;
+    }
+    .debug-panel h3 {
+      margin-top: 0;
+      color: #fff;
+    }
+    .debug-btn {
+      background: #bada55;
+      color: #000;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .debug-btn:hover {
+      background: #a1c742;
+    }
+    .debug-output {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
+  <!-- Meta tag to prevent caching -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+</head>
+<body>
+
+<body>
+  <!-- Welcome message -->
+  <div id="welcomeMsg" hidden>Welcome, <span id="userName"></span>!</div>
+
+  <!-- Debug panel -->
+  <div class="debug-panel">
+    <h3>Probash Ferry Debug Mode</h3>
+    <p>Testing likes and comments functionality</p>
+    <button id="runTestBtn" class="debug-btn">Run Diagnostic Test</button>
+    <button id="clearLogBtn" class="debug-btn">Clear Log</button>
+    <div id="debugOutput" class="debug-output"></div>
+  </div>
+
+  <!-- HORIZONTAL STRIP : hero panel + wheel of cards -->
+  <div class="h-scroll">
+
+    <!-- 1 • Cover panel (full screen) -->
+    <section class="hero panel">
+      <h1>Probash Ferry</h1>
+      <p>Stories of Bengalis abroad</p>
+      <span class="cue">Swipe ➜</span>
+    </section>
+
+    <!-- 2 • Wheel containing all article cards -->
+    <div class="wheel panel">      
+      <!-- CARD 1 -->
+      <div class="card" data-article="puja-nyc">
+        <img src="images/puja-thumb.jpg" alt="">
+        <h2>Durga Puja in NYC</h2>
+        <p>Drums, dhaak, and Brooklyn bridges…</p>
+        <div class="card-stats">
+          <span class="like-stat"><i class="fas fa-heart"></i> <span class="like-count">0</span></span>
+          <span class="comment-stat"><i class="fas fa-comment"></i> <span class="comment-count">0</span></span>
+        </div>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="card" data-article="bricklane">
+        <img src="images/bricklane-thumb.jpg" alt="">
+        <h2>Adda at Brick Lane</h2>
+        <p>Smell of rolls, sound of Tagore…</p>
+        <div class="card-stats">
+          <span class="like-stat"><i class="fas fa-heart"></i> <span class="like-count">0</span></span>
+          <span class="comment-stat"><i class="fas fa-comment"></i> <span class="comment-count">0</span></span>
+        </div>
+      </div>
+    </div><!-- /wheel -->
+
+  </div><!-- /h-scroll -->
+
+  <!-- 3 • Hidden full articles (open on click) -->  
+  <article id="puja-nyc" class="article">
+    <button class="close">×</button>
+    <h2>Durga Puja in New York City</h2>
+    <div class="article-content">
+      <p>Full story goes here…</p>
+    </div>
+    
+    <div class="article-actions">
+      <button class="like-button"><i class="fas fa-heart"></i> <span class="like-text">Like</span></button>
+      <span class="like-count-display">0 likes</span>
+    </div>
+    
+    <div class="comments-section">
+      <h3>Comments</h3>
+      <div class="comments-list">
+        <!-- Comments will be loaded here -->
+        <p class="no-comments-message">Be the first to comment!</p>
+      </div>
+      
+      <div class="comment-form">
+        <textarea placeholder="Add a comment..."></textarea>
+        <div class="comment-options">
+          <label><input type="checkbox" class="anonymous-checkbox"> Comment anonymously</label>
+          <button type="submit" class="comment-submit">Post</button>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article id="bricklane" class="article">
+    <button class="close">×</button>
+    <h2>Adda at Brick Lane</h2>
+    <div class="article-content">
+      <p>Full story goes here…</p>
+    </div>
+    
+    <div class="article-actions">
+      <button class="like-button"><i class="fas fa-heart"></i> <span class="like-text">Like</span></button>
+      <span class="like-count-display">0 likes</span>
+    </div>
+    
+    <div class="comments-section">
+      <h3>Comments</h3>
+      <div class="comments-list">
+        <!-- Comments will be loaded here -->
+        <p class="no-comments-message">Be the first to comment!</p>
+      </div>
+      
+      <div class="comment-form">
+        <textarea placeholder="Add a comment..."></textarea>
+        <div class="comment-options">
+          <label><input type="checkbox" class="anonymous-checkbox"> Comment anonymously</label>
+          <button type="submit" class="comment-submit">Post</button>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <script src="app.js" type="module"></script>
+  
+  <!-- fixed auth buttons -->
+  <button id="loginBtn"  class="auth"><i class="fab fa-google"></i></button>
+  <button id="logoutBtn" class="auth" hidden>Log out</button>
+
+  <script>
+    // Debug helper code
+    document.addEventListener('DOMContentLoaded', () => {
+      const runTestBtn = document.getElementById('runTestBtn');
+      const clearLogBtn = document.getElementById('clearLogBtn');
+      const debugOutput = document.getElementById('debugOutput');
+      
+      // Override console.log to capture in our debug panel
+      const originalConsoleLog = console.log;
+      const originalConsoleError = console.error;
+      const originalConsoleWarn = console.warn;
+      
+      console.log = function() {
+        // Call original console.log
+        originalConsoleLog.apply(console, arguments);
+        
+        // Add to debug output
+        const line = document.createElement('div');
+        line.innerHTML = Array.from(arguments).map(arg => {
+          if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+          } else {
+            return arg;
+          }
+        }).join(' ');
+        debugOutput.appendChild(line);
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      };
+      
+      console.error = function() {
+        // Call original console.error
+        originalConsoleError.apply(console, arguments);
+        
+        // Add to debug output with red color
+        const line = document.createElement('div');
+        line.style.color = '#ff5555';
+        line.innerHTML = '❌ ERROR: ' + Array.from(arguments).map(arg => {
+          if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+          } else {
+            return arg;
+          }
+        }).join(' ');
+        debugOutput.appendChild(line);
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      };
+      
+      console.warn = function() {
+        // Call original console.warn
+        originalConsoleWarn.apply(console, arguments);
+        
+        // Add to debug output with yellow color
+        const line = document.createElement('div');
+        line.style.color = '#ffff55';
+        line.innerHTML = '⚠️ WARNING: ' + Array.from(arguments).map(arg => {
+          if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+          } else {
+            return arg;
+          }
+        }).join(' ');
+        debugOutput.appendChild(line);
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      };
+      
+      // Button handlers
+      runTestBtn.addEventListener('click', () => {
+        if (window.testLikeAndCommentFunctionality) {
+          window.testLikeAndCommentFunctionality();
+        } else {
+          console.error('Test function not available yet. Please wait for page to fully load.');
+        }
+      });
+      
+      clearLogBtn.addEventListener('click', () => {
+        debugOutput.innerHTML = '';
+      });
+      
+      // Log startup
+      setTimeout(() => {
+        console.log('Debug mode active. Click "Run Diagnostic Test" to check functionality.');
+      }, 1000);
+    });
+  </script>
+</body>
+
+</html>

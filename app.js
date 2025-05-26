@@ -119,6 +119,26 @@ document.querySelectorAll('.card').forEach(card=>{
   card.addEventListener('click', ()=>{
     document.getElementById(card.dataset.article).classList.add('open');
     document.body.style.overflow = 'hidden';
+    
+    // TROUBLESHOOTING: Add direct event handler to like button when an article is opened
+    const articleId = card.dataset.article;
+    const likeButton = document.querySelector(`#${articleId} .like-button`);
+    
+    if (likeButton && !likeButton._hasDirectHandler) {
+      console.log(`%c[PF DEBUG] Adding direct handler to like button for ${articleId}`, 'background: #dfd; color: #333;');
+      
+      // Add direct click handler (in addition to the one added during initialization)
+      likeButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`%c[PF EVENT] Like button clicked directly for ${articleId}`, 'background: #ffc; color: #333;');
+        toggleLike(articleId);
+        return false;
+      }, true); // Use capture phase to ensure this runs first
+      
+      // Mark that we've added the handler
+      likeButton._hasDirectHandler = true;
+    }
   });
 });
 
@@ -174,6 +194,8 @@ async function initializeArticleData() {
 
 // Toggle like on an article
 async function toggleLike(articleId) {
+  console.log(`toggleLike called for article: ${articleId}`);
+  
   // First check if articleId exists
   if (!articleId) {
     console.error('No article ID provided to toggleLike function');
@@ -183,6 +205,7 @@ async function toggleLike(articleId) {
   // Verify if Firebase auth is initialized
   if (!auth) {
     console.error('Firebase Auth is not initialized');
+    alert('Authentication system is not connecting properly. Please refresh the page.');
     return;
   }
   
@@ -198,6 +221,7 @@ async function toggleLike(articleId) {
   // Verify if Firestore is initialized
   if (!db) {
     console.error('Firebase Firestore is not initialized');
+    alert('Database connection failed. Please refresh the page.');
     return;
   }
   
@@ -215,14 +239,30 @@ async function toggleLike(articleId) {
   
   // Disable button during operation to prevent double-clicks
   likeButton.disabled = true;
-  
-  try {
+    try {
+    // Check if article exists first
+    console.log(`Checking if article ${articleId} exists`);
+    const articleDoc = await getDoc(articleRef);
+    
+    if (!articleDoc.exists()) {
+      console.log(`Article ${articleId} does not exist yet, creating it`);
+      await setDoc(articleRef, {
+        title: document.querySelector(`#${articleId} h2`)?.textContent || articleId,
+        likeCount: 0,
+        commentCount: 0,
+        createdAt: serverTimestamp()
+      });
+      console.log(`Created article document for ${articleId}`);
+    }
+
+    console.log(`Checking if user ${userId} already liked article ${articleId}`);
     const likeDoc = await getDoc(likeRef);
     
     if (likeDoc.exists()) {
       console.log(`User ${userId} unliking article ${articleId}`);
       // User already liked this article - unlike it
       await deleteDoc(likeRef);
+      
       await updateDoc(articleRef, {
         likeCount: increment(-1)
       });
@@ -231,6 +271,8 @@ async function toggleLike(articleId) {
       likeButton.classList.remove('liked');
       const likeText = likeButton.querySelector('.like-text');
       if (likeText) likeText.textContent = 'Like';
+      
+      console.log(`Successfully removed like from article ${articleId}`);
     } else {
       console.log(`User ${userId} liking article ${articleId}`);
       // User hasn't liked this article yet - like it
@@ -238,6 +280,7 @@ async function toggleLike(articleId) {
         userId: userId,
         timestamp: serverTimestamp()
       });
+      
       await updateDoc(articleRef, {
         likeCount: increment(1)
       });
@@ -255,17 +298,18 @@ async function toggleLike(articleId) {
           heartIcon.classList.remove('heart-animation');
         }, 300);
       }
+      
+      console.log(`Successfully added like to article ${articleId}`);
     }
     
-    console.log(`Like operation completed successfully for article ${articleId}`);
+    console.log(`Like operation completed for article ${articleId}`);
     
-    // We don't need to manually update counts since we have real-time listeners
-    // But keeping this for backwards compatibility
+    // Update like counts in UI
     updateLikeCount(articleId);
     
   } catch (error) {
     console.error(`Error toggling like for article ${articleId}:`, error);
-    // Show error notification if needed
+    alert('Sorry, there was a problem with the like operation. Please try again.');
   } finally {
     // Re-enable the button regardless of success or failure
     likeButton.disabled = false;
@@ -559,24 +603,32 @@ function setupUserLikeListener(articleId) {
   
   const likeRef = doc(db, `likes/${articleId}/users/${userId}`);
   
+  console.log(`Setting up real-time listener for user ${userId} likes on article ${articleId}`);
+  
   // Return the unsubscribe function in case we need to stop listening later
   return onSnapshot(likeRef, {
     next: (docSnapshot) => {
       const likeButton = document.querySelector(`#${articleId} .like-button`);
-      if (!likeButton) return;
+      if (!likeButton) {
+        console.warn(`Like button not found for article ${articleId} in listener`);
+        return;
+      }
       
       const likeText = likeButton.querySelector('.like-text');
-      if (!likeText) return;
+      if (!likeText) {
+        console.warn(`Like text not found for article ${articleId} in listener`);
+        return;
+      }
       
       if (docSnapshot.exists()) {
         likeButton.classList.add('liked');
         likeText.textContent = 'Liked';
+        console.log(`Real-time update: User ${userId} has liked article ${articleId}`);
       } else {
         likeButton.classList.remove('liked');
         likeText.textContent = 'Like';
+        console.log(`Real-time update: User ${userId} has not liked article ${articleId}`);
       }
-      
-      console.log(`Real-time update: User ${userId} ${docSnapshot.exists() ? 'has liked' : 'has not liked'} article ${articleId}`);
     },
     error: (error) => {
       console.error(`Error listening to user like status for article ${articleId}:`, error);
@@ -657,11 +709,35 @@ function setupDoubleTap(articleId) {
 
 // Initialize likes and comments feature
 function initializeLikesAndComments() {
-  console.log('Initializing likes and comments functionality');
+  console.log('%c[PF DEBUG] Initializing likes and comments functionality', 'background: #ff9; color: #333; padding: 3px; border-radius: 3px;');
+  
+  // Check if Firebase is properly initialized
+  if (!db) {
+    console.error('%c[PF ERROR] Firebase Firestore is not initialized!', 'background: #f33; color: white; padding: 3px; border-radius: 3px;');
+    alert('Firebase database is not connecting properly. Please check your internet connection and refresh the page.');
+    return;
+  }
+  
+  console.log('%c[PF DEBUG] Firebase Firestore instance:', 'background: #ff9; color: #333;', db);
+  
+  // Clean up any existing listeners first
+  if (window.pfListeners) {
+    console.log('%c[PF DEBUG] Cleaning up existing listeners', 'background: #ff9; color: #333;');
+    for (const key in window.pfListeners) {
+      if (typeof window.pfListeners[key] === 'function') {
+        try {
+          window.pfListeners[key](); // Call the unsubscribe function
+          console.log(`Unsubscribed from listener: ${key}`);
+        } catch (e) {
+          console.error(`Error unsubscribing from listener ${key}:`, e);
+        }
+      }
+    }
+  }
   
   // Initialize article data in Firestore
   initializeArticleData().then(() => {
-    console.log('Article data initialized in Firestore');
+    console.log('%c[PF DEBUG] Article data initialized in Firestore', 'background: #ff9; color: #333;');
     
     // Store listeners so we can unsubscribe later if needed
     const listeners = {};
@@ -675,16 +751,28 @@ function initializeLikesAndComments() {
       if (!articleId) {
         console.error('Found article without ID', article);
         return;
-      }
-      
-      // Like button click
+      }      // Like button click
       const likeButton = article.querySelector('.like-button');
       if (likeButton) {
         console.log(`Setting up like button for ${articleId}`);
-        likeButton.addEventListener('click', (e) => {
+        
+        // Remove any existing event listeners by cloning and replacing the button
+        const newButton = likeButton.cloneNode(true);
+        likeButton.parentNode.replaceChild(newButton, likeButton);
+        
+        // Add fresh event listener with capture phase to ensure it runs first
+        newButton.addEventListener('click', function likeHandler(e) {
           e.preventDefault();
+          e.stopPropagation();
+          console.log(`Like button clicked for article: ${articleId}`);
           toggleLike(articleId);
-        });
+          return false;
+        }, true); // Use capture phase to ensure this runs first
+        
+        // Mark that we've set up this button
+        newButton._hasEventListener = true;
+        
+        console.log(`Like button event handler set up for ${articleId}`);
       } else {
         console.warn(`Like button not found for article ${articleId}`);
       }
@@ -750,16 +838,117 @@ function initializeLikesAndComments() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Ensure Firebase is properly initialized before we start using it
-  if (db) {
-    console.log('Firebase Firestore is available - initializing features');
-    // Give a bit more time for Firebase to fully initialize
-    setTimeout(() => {
+  console.log('%c[PF] Document ready, checking Firebase initialization', 'color: #0066cc; font-weight: bold;');
+  
+  // Create a counter to keep track of initialization attempts
+  let initAttempts = 0;
+  const maxAttempts = 5;
+  
+  function attemptInitialization() {
+    initAttempts++;
+    console.log(`%c[PF] Initialization attempt ${initAttempts}/${maxAttempts}`, 'color: #0066cc;');
+    
+    if (db) {
+      console.log('%c[PF] Firebase Firestore is available - initializing features', 'color: #22cc22; font-weight: bold;');
       initializeLikesAndComments();
-    }, 1500);
-  } else {
-    console.error('Firebase Firestore is not available - check Firebase initialization');
+      
+      // Add diagnostic test
+      window.testLikeAndCommentFunctionality = function() {
+        console.log('%c--- PROBASHFERRY DIAGNOSTIC TEST ---', 'background:#222;color:#bada55;padding:5px;font-size:14px');
+        
+        // Check Firebase connections
+        console.log('1. Firebase App:', app ? '✅ Connected' : '❌ Not connected');
+        console.log('2. Firebase Auth:', auth ? '✅ Available' : '❌ Not available');
+        console.log('3. Firebase Firestore:', db ? '✅ Available' : '❌ Not available');
+        console.log('4. User logged in:', auth.currentUser ? `✅ Yes (${auth.currentUser.displayName})` : '❌ No');
+        
+        // Check article elements
+        const articles = document.querySelectorAll('.article');
+        console.log(`5. Articles found: ${articles.length > 0 ? '✅' : '❌'} (${articles.length})`);
+        
+        articles.forEach(article => {
+          const articleId = article.id;
+          const likeButton = article.querySelector('.like-button');
+          const commentForm = article.querySelector('.comment-form');
+          
+          console.log(`\nArticle "${articleId}":`);
+          console.log(`- Like button: ${likeButton ? '✅ Found' : '❌ Missing'}`);
+          console.log(`- Comment form: ${commentForm ? '✅ Found' : '❌ Missing'}`);
+          
+          if (likeButton) {
+            // Add a test click handler
+            console.log('- Adding test click handler to like button...');
+            
+            likeButton.onclick = function(e) {
+              console.log('%c[TEST CLICK] Like button clicked', 'color:green;font-weight:bold');
+              e.preventDefault();
+              e.stopPropagation();
+              
+              if (auth.currentUser) {
+                const userId = auth.currentUser.uid;
+                console.log(`Testing like for articleId=${articleId}, userId=${userId}`);
+                
+                // Test direct Firestore write
+                const testLikeRef = doc(db, `likes/${articleId}/users/${userId}_test`);
+                const articleRef = doc(db, `articles/${articleId}`);
+                
+                console.log('Attempting direct Firestore write...');
+                
+                setDoc(testLikeRef, { 
+                  userId: userId,
+                  testTimestamp: new Date().toISOString(),
+                  message: 'This is a diagnostic test entry'
+                })
+                .then(() => {
+                  console.log('%c✅ TEST WRITE SUCCESSFUL! Firestore is working properly.', 'color:green;font-weight:bold');
+                  // Clean up the test entry
+                  deleteDoc(testLikeRef);
+                })
+                .catch(err => {
+                  console.error('%c❌ TEST WRITE FAILED! Firestore may have issues:', 'color:red;font-weight:bold', err);
+                  alert('Firebase test failed. Check console for details.');
+                });
+              } else {
+                console.log('Cannot test write - user not logged in');
+                loginBtn.click();
+              }
+              
+              return false;
+            };
+          }
+        });
+        
+        // Check for real-time listeners
+        console.log('\nListener Status:');
+        if (window.pfListeners) {
+          console.log(`✅ ${Object.keys(window.pfListeners).length} listeners registered`);
+          for (const key in window.pfListeners) {
+            console.log(`- ${key}: ${typeof window.pfListeners[key] === 'function' ? '✅ active' : '❓ unknown'}`);
+          }
+        } else {
+          console.log('❌ No listeners registered (window.pfListeners not found)');
+        }
+        
+        console.log('\nTesting complete. To test the like functionality directly, click any like button.');
+        console.log('%c--- END DIAGNOSTIC TEST ---', 'background:#222;color:#bada55;padding:5px;font-size:14px');
+      };
+      
+      // Run diagnostic after a few seconds
+      setTimeout(window.testLikeAndCommentFunctionality, 3000);
+    } else {
+      console.warn(`%c[PF] Firebase Firestore not available yet (attempt ${initAttempts}/${maxAttempts})`, 'color: #cc6600;');
+      if (initAttempts < maxAttempts) {
+        // Try again after a delay
+        setTimeout(attemptInitialization, 800);
+      } else {
+        console.error('%c[PF] Firebase Firestore initialization failed after maximum attempts', 'color: #cc0000; font-weight: bold;');
+        alert('Could not connect to Firebase. Please check your internet connection and refresh the page.');
+      }
+    }
   }
+  
+  // Start the initialization process
+  setTimeout(attemptInitialization, 500);
 });
 
 // The auth state change handler is already defined above, we just need to add
