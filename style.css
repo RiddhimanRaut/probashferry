@@ -72,7 +72,18 @@ body{margin:0;}   /* we no longer lock scrolling here */
 
 .auth{
   position:fixed; top:1rem; right:1rem;
-  padding:.4rem .8rem; border:none; border-radius:6px;
+  padding:.5rem; border:none; border-radius:50%;
   background:#4285F4; color:#fff; cursor:pointer;
-  font-size:.9rem; z-index:1000;
+  font-size:1.1rem; z-index:1000;
+  width:2.5rem; height:2.5rem;
+  display:flex; justify-content:center; align-items:center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+#logoutBtn{
+  border-radius:6px;
+  width:auto;
+  height:auto;
+  padding:.4rem .8rem;
+  font-size:.9rem;
 }
