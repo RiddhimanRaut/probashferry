@@ -8,42 +8,51 @@
 </head>
 <body>
 
-<!-- ❶ COVER -------------------------------------------------->
-<section class="hero panel">
-  <h1>Probash Ferry</h1>
-  <p>Stories of Bengalis abroad</p>
-  <span class="cue">Swipe ➜</span>
-</section>
+<body>
 
-<!-- ❷ ARTICLE WHEEL ----------------------------------------->
-<div class="h-scroll">
-  <!-- card skeleton; duplicate as needed -->
-  <div class="card" data-article="puja-nyc">
-    <img src="images/puja-thumb.jpg" alt="">
-    <h2>Durga Puja in NYC</h2>
-    <p>Drums, dhaak, and Brooklyn bridges…</p>
-  </div>
+  <!-- HORIZONTAL STRIP : hero panel + wheel of cards -->
+  <div class="h-scroll">
 
-  <div class="card" data-article="bricklane">
-    <img src="images/bricklane-thumb.jpg" alt="">
+    <!-- 1 • Cover panel (full screen) -->
+    <section class="hero panel">
+      <h1>Probash Ferry</h1>
+      <p>Stories of Bengalis abroad</p>
+      <span class="cue">Swipe ➜</span>
+    </section>
+
+    <!-- 2 • Wheel containing all article cards -->
+    <div class="wheel panel">
+      <!-- CARD 1 -->
+      <div class="card" data-article="puja-nyc">
+        <img src="images/puja-thumb.jpg" alt="">
+        <h2>Durga Puja in NYC</h2>
+        <p>Drums, dhaak, and Brooklyn bridges…</p>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="card" data-article="bricklane">
+        <img src="images/bricklane-thumb.jpg" alt="">
+        <h2>Adda at Brick Lane</h2>
+        <p>Smell of rolls, sound of Tagore…</p>
+      </div>
+    </div><!-- /wheel -->
+
+  </div><!-- /h-scroll -->
+
+  <!-- 3 • Hidden full articles (open on click) -->
+  <article id="puja-nyc"  class="article">
+    <button class="close">×</button>
+    <h2>Durga Puja in New York City</h2>
+    <p>Full story goes here…</p>
+  </article>
+
+  <article id="bricklane" class="article">
+    <button class="close">×</button>
     <h2>Adda at Brick Lane</h2>
-    <p>Smell of rolls, sound of Tagore…</p>
-  </div>
-</div>
+    <p>Full story goes here…</p>
+  </article>
 
-<!-- ❸ FULL ARTICLES (initially hidden) ----------------------->
-<article id="puja-nyc"  class="article">
-  <button class="close">×</button>
-  <h2>Durga Puja in New York City</h2>
-  <p>Full story goes here…</p>
-</article>
-
-<article id="bricklane" class="article">
-  <button class="close">×</button>
-  <h2>Adda at Brick Lane</h2>
-  <p>Full story goes here…</p>
-</article>
-
-<script src="app.js" type="module"></script>
+  <script src="app.js" type="module"></script>
 </body>
+
 </html>
