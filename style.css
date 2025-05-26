@@ -69,3 +69,10 @@ body{margin:0;}   /* we no longer lock scrolling here */
   position:absolute;top:1rem;right:1rem;
   font-size:2rem;background:none;border:none;cursor:pointer;
 }
+
+.auth{
+  position:fixed; top:1rem; right:1rem;
+  padding:.4rem .8rem; border:none; border-radius:6px;
+  background:#4285F4; color:#fff; cursor:pointer;
+  font-size:.9rem; z-index:1000;
+}
