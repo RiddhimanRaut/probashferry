@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getDoc, setDoc, deleteDoc, incrementField } from "@/lib/firebase/firestore-rest";
+import { getDoc, setDoc, mergeDoc, deleteDoc } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export function useLike(articleId: string) {
@@ -71,12 +71,14 @@ export function useLike(articleId: string) {
         await setDoc(`articles/${articleId}`, { likeCount: 0, commentCount: 0 });
       }
 
+      const currentCount = (article?.likeCount as number) || 0;
+
       if (wasLiked) {
         await deleteDoc(`likes/${articleId}/users/${user.uid}`);
-        await incrementField(`articles/${articleId}`, "likeCount", -1);
+        await mergeDoc(`articles/${articleId}`, { likeCount: Math.max(0, currentCount - 1) });
       } else {
         await setDoc(`likes/${articleId}/users/${user.uid}`, { userId: user.uid });
-        await incrementField(`articles/${articleId}`, "likeCount", 1);
+        await mergeDoc(`articles/${articleId}`, { likeCount: currentCount + 1 });
       }
       return !wasLiked;
     } catch (error) {
@@ -85,7 +87,6 @@ export function useLike(articleId: string) {
       setLiked(wasLiked);
       setLikeCount((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1));
       console.error("Like error:", error);
-      throw error;
     } finally {
       busyRef.current = false;
       // Keep polls suppressed so server-side writes propagate before next read
