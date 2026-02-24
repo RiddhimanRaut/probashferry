@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 
 export default function CoverPanel() {
   return (
-    <div className="panel relative flex flex-col items-center justify-center bg-charcoal overflow-hidden">
+    <div className="h-[100dvh] relative flex flex-col items-center justify-center bg-charcoal overflow-hidden">
       <div className="absolute inset-0">
         <div className="w-full h-full bg-gradient-to-br from-charcoal via-charcoal/95 to-terracotta-dark/20" />
       </div>

@@ -76,7 +76,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             x: { type: "spring", stiffness: 300, damping: 30 },
             opacity: { duration: 0.2 },
           }}
-          className="absolute inset-0"
+          className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         >
           {currentIndex === 0 ? (
             <CoverPanel />

@@ -20,6 +20,14 @@ interface ArticlePanelProps {
 export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
+
+  // Attach ref to the scrollable parent (motion.div) after mount
+  const setScrollParent = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const parent = node.parentElement;
+      if (parent) (scrollRef as React.MutableRefObject<HTMLElement | null>).current = parent;
+    }
+  }, []);
   const { liked, toggleLike } = useLike(article.slug);
   const { user, signIn } = useAuthContext();
 
@@ -29,7 +37,7 @@ export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
   }, [user, signIn, liked, toggleLike]);
 
   return (
-    <div className="panel relative bg-paper" ref={scrollRef}>
+    <div className="relative bg-paper min-h-full" ref={setScrollParent}>
       {isActive && <ReadingProgress progress={progress} />}
 
       <div className="relative h-[40vh] min-h-[250px] overflow-hidden">
