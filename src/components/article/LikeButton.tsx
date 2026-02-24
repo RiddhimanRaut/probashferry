@@ -3,10 +3,8 @@
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
-import { getFirebaseDb } from "@/lib/firebase/config";
 
 export default function LikeButton({ articleId }: { articleId: string }) {
   const { liked, likeCount, toggleLike: _toggleLike } = useLike(articleId);
