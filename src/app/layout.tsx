@@ -58,6 +58,11 @@ export default function RootLayout({
     >
       <body className="font-body bg-paper text-charcoal antialiased">
         <AuthProvider>{children}</AuthProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js")`,
+          }}
+        />
       </body>
     </html>
   );
