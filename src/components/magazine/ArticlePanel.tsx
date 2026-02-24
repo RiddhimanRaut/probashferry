@@ -29,12 +29,12 @@ export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
     }
   }, []);
   const { liked, toggleLike } = useLike(article.slug);
-  const { user, signIn } = useAuthContext();
+  const { user, promptSignIn } = useAuthContext();
 
   const handleDoubleTap = useCallback(async () => {
-    if (!user) { signIn(); return; }
+    if (!user) { promptSignIn(); return; }
     if (!liked) await toggleLike();
-  }, [user, signIn, liked, toggleLike]);
+  }, [user, promptSignIn, liked, toggleLike]);
 
   return (
     <div className="relative bg-paper min-h-full" ref={setScrollParent}>

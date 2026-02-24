@@ -7,10 +7,10 @@ import { useAuthContext } from "@/providers/AuthProvider";
 
 export default function LikeButton({ articleId }: { articleId: string }) {
   const { liked, likeCount, toggleLike } = useLike(articleId);
-  const { user, signIn } = useAuthContext();
+  const { user, promptSignIn } = useAuthContext();
 
   const handleClick = async () => {
-    if (!user) { signIn(); return; }
+    if (!user) { promptSignIn(); return; }
     await toggleLike();
   };
 

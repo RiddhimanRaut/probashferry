@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export default function CommentForm({ onSubmit }: { onSubmit: (text: string, isAnonymous: boolean) => Promise<void> }) {
-  const { user, signIn } = useAuthContext();
+  const { user, promptSignIn } = useAuthContext();
   const [text, setText] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -13,7 +13,7 @@ export default function CommentForm({ onSubmit }: { onSubmit: (text: string, isA
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || submitting) return;
-    if (!user) { signIn(); return; }
+    if (!user) { promptSignIn(); return; }
     setSubmitting(true);
     await onSubmit(text, isAnonymous);
     setText("");
