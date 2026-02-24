@@ -14,6 +14,7 @@ const SWIPE_THRESHOLD = 60;
 const TAP_THRESHOLD = 25;
 const TAP_HOLD_LIMIT = 500;
 const DOUBLE_TAP_WINDOW = 400;
+const DOUBLE_TAP_DISTANCE = 60; // px — both taps must be within this radius
 const CONTROLS_TIMEOUT = 3000;
 
 interface HeartBurst {
@@ -50,9 +51,9 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastTouchTap = useRef(0);
-  const lastMouseTap = useRef(0);
-  const lastTouchDoubleTap = useRef(0); // suppress synthetic click after touch double-tap
+  const lastTouchTap = useRef({ time: 0, x: 0, y: 0 });
+  const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
+  const lastTouchDoubleTap = useRef(0);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -109,6 +110,9 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
       const target = e.target as HTMLElement;
       if (target.closest("button, a, input, [role='button']")) {
+        // Reset double-tap tracking so button taps don't bridge two content taps
+        lastTouchTap.current = { time: 0, x: 0, y: 0 };
+        if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
         touchStart.current = null;
         return;
       }
@@ -118,8 +122,12 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         else goPrev();
       } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < TAP_HOLD_LIMIT) {
         const now = Date.now();
-        const isDoubleTap = now - lastTouchTap.current < DOUBLE_TAP_WINDOW;
-        lastTouchTap.current = now;
+        const prev = lastTouchTap.current;
+        const isDoubleTap =
+          now - prev.time < DOUBLE_TAP_WINDOW &&
+          Math.abs(touch.clientX - prev.x) < DOUBLE_TAP_DISTANCE &&
+          Math.abs(touch.clientY - prev.y) < DOUBLE_TAP_DISTANCE;
+        lastTouchTap.current = { time: now, x: touch.clientX, y: touch.clientY };
 
         if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
 
@@ -147,14 +155,23 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       if (Date.now() - lastTouchDoubleTap.current < 800) return;
 
       const target = e.target as HTMLElement;
-      if (target.closest("button, a, input, [role='button']")) return;
+      if (target.closest("button, a, input, [role='button']")) {
+        lastMouseTap.current = { time: 0, x: 0, y: 0 };
+        return;
+      }
 
       const now = Date.now();
-      if (now - lastMouseTap.current < DOUBLE_TAP_WINDOW) {
+      const prev = lastMouseTap.current;
+      const isDoubleTap =
+        now - prev.time < DOUBLE_TAP_WINDOW &&
+        Math.abs(e.clientX - prev.x) < DOUBLE_TAP_DISTANCE &&
+        Math.abs(e.clientY - prev.y) < DOUBLE_TAP_DISTANCE;
+
+      if (isDoubleTap) {
         fireDoubleTap(e.clientX, e.clientY);
-        lastMouseTap.current = 0;
+        lastMouseTap.current = { time: 0, x: 0, y: 0 };
       } else {
-        lastMouseTap.current = now;
+        lastMouseTap.current = { time: now, x: e.clientX, y: e.clientY };
       }
     },
     [fireDoubleTap]
