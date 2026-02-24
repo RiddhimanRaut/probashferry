@@ -115,6 +115,31 @@ export async function deleteDoc(path: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`DELETE ${path}: ${res.status}`);
 }
 
+export async function incrementField(docPath: string, field: string, amount: number): Promise<void> {
+  const headers = await authHeaders();
+  const docName = `projects/${PID}/databases/(default)/documents/${docPath}`;
+  const res = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${PID}/databases/(default)/documents:commit`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        writes: [
+          {
+            transform: {
+              document: docName,
+              fieldTransforms: [
+                { fieldPath: field, increment: { integerValue: String(amount) } },
+              ],
+            },
+          },
+        ],
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`INCREMENT ${docPath}.${field}: ${res.status}`);
+}
+
 export async function addDoc(collectionPath: string, data: Record<string, unknown>): Promise<string> {
   const headers = await authHeaders();
   const res = await fetch(`${BASE}/${collectionPath}`, {
