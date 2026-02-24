@@ -68,8 +68,9 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const handleScrollToggle = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
-    el.scrollTo({ top: isAtBottom ? 0 : el.scrollHeight, behavior: "smooth" });
-  }, [isAtBottom]);
+    const atBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 20;
+    el.scrollTo({ top: atBottom ? 0 : el.scrollHeight, behavior: "smooth" });
+  }, []);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }

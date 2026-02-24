@@ -21,7 +21,7 @@ test.describe("Scroll toggle button", () => {
     await expect(btn).not.toBeVisible();
   });
 
-  test("clicking button scrolls to bottom", async ({ magazinePage: page }) => {
+  test("clicking button scrolls to bottom and flips to up arrow", async ({ magazinePage: page }) => {
     await goToFirstArticle(page);
 
     const vw = page.viewportSize()!;
@@ -32,6 +32,7 @@ test.describe("Scroll toggle button", () => {
     await expect(btn).toBeVisible({ timeout: 2000 });
     await btn.dispatchEvent("click");
 
+    // Wait for scroll to reach bottom
     await page.waitForFunction(
       () => {
         const el = document.querySelector(".overflow-y-auto");
@@ -41,34 +42,34 @@ test.describe("Scroll toggle button", () => {
       },
       { timeout: 5000 }
     );
+
+    // Re-show controls and verify button flipped to up arrow
+    await singleTap(page, vw.width / 2, vw.height / 2);
+    await page.waitForTimeout(600);
+    const upBtn = page.locator('button[aria-label="Scroll to top"]');
+    await expect(upBtn).toBeVisible({ timeout: 2000 });
   });
 
-  test("button changes to up arrow at bottom, scrolls back to top", async ({ magazinePage: page }) => {
+  test("up arrow scrolls back to top and flips to down arrow", async ({ magazinePage: page }) => {
     await goToFirstArticle(page);
 
+    // Programmatically scroll to bottom (skip the button for setup)
+    await page.evaluate(() => {
+      const el = document.querySelector(".overflow-y-auto");
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
+    });
+    await page.waitForTimeout(200);
+
+    // Show controls — button should be "Scroll to top"
     const vw = page.viewportSize()!;
     await singleTap(page, vw.width / 2, vw.height / 2);
     await page.waitForTimeout(600);
 
-    // Scroll to bottom
-    const downBtn = page.locator('button[aria-label="Scroll to bottom"]');
-    await expect(downBtn).toBeVisible({ timeout: 2000 });
-    await downBtn.dispatchEvent("click");
-
-    // Wait for scroll to reach bottom and button to flip to "Scroll to top"
     const upBtn = page.locator('button[aria-label="Scroll to top"]');
-    await expect(upBtn).toBeVisible({ timeout: 5000 });
+    await expect(upBtn).toBeVisible({ timeout: 2000 });
+    await upBtn.dispatchEvent("click");
 
-    // Re-show controls (they may have auto-hidden during scroll wait)
-    await singleTap(page, vw.width / 2, vw.height / 2);
-    await page.waitForTimeout(600);
-
-    // Click "Scroll to top"
-    const upBtnAgain = page.locator('button[aria-label="Scroll to top"]');
-    await expect(upBtnAgain).toBeVisible({ timeout: 2000 });
-    await upBtnAgain.dispatchEvent("click");
-
-    // Poll until scroll reaches the top
+    // Wait for scroll to reach top
     await page.waitForFunction(
       () => {
         const el = document.querySelector(".overflow-y-auto");
@@ -77,5 +78,11 @@ test.describe("Scroll toggle button", () => {
       },
       { timeout: 5000 }
     );
+
+    // Re-show controls — button should be back to "Scroll to bottom"
+    await singleTap(page, vw.width / 2, vw.height / 2);
+    await page.waitForTimeout(600);
+    const downBtn = page.locator('button[aria-label="Scroll to bottom"]');
+    await expect(downBtn).toBeVisible({ timeout: 2000 });
   });
 });
