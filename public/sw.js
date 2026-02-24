@@ -1,4 +1,4 @@
-const CACHE_NAME = "probashferry-v3";
+const CACHE_NAME = "probashferry-v4";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -16,9 +16,10 @@ self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") return;
 
-  // Let Firebase auth redirects pass through to the network directly
+  // Let Firebase/Google API requests pass through to the network directly
   const url = new URL(event.request.url);
   if (url.pathname.startsWith("/__/auth/")) return;
+  if (url.hostname.includes("googleapis.com") || url.hostname.includes("firebaseio.com")) return;
 
   // Stale-while-revalidate: serve from cache immediately, update in background
   event.respondWith(
