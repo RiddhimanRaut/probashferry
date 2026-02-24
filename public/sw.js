@@ -16,6 +16,10 @@ self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") return;
 
+  // Let Firebase auth redirects pass through to the network directly
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith("/__/auth/")) return;
+
   // Stale-while-revalidate: serve from cache immediately, update in background
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
