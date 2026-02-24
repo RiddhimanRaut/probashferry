@@ -9,7 +9,8 @@ import { useAuthContext } from "@/providers/AuthProvider";
 import { getFirebaseDb } from "@/lib/firebase/config";
 
 export default function LikeButton({ articleId }: { articleId: string }) {
-  const { liked, likeCount, toggleLike } = useLike(articleId);
+  const { liked, likeCount, toggleLike: _toggleLike } = useLike(articleId);
+  void _toggleLike;
   const { user, promptSignIn } = useAuthContext();
   const [debug, setDebug] = useState<string | null>(null);
 
