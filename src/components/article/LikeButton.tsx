@@ -7,8 +7,7 @@ import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export default function LikeButton({ articleId }: { articleId: string }) {
-  const { liked, likeCount, toggleLike: _toggleLike } = useLike(articleId);
-  void _toggleLike;
+  const { liked, likeCount, toggleLike } = useLike(articleId);
   const { user, promptSignIn } = useAuthContext();
   const [debug, setDebug] = useState<string | null>(null);
 
@@ -18,40 +17,15 @@ export default function LikeButton({ articleId }: { articleId: string }) {
       promptSignIn();
       return;
     }
-
-    const pid = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    setDebug(`pid=${pid} uid=${user.uid.slice(0, 6)} testing…`);
-
-    // Test 1: raw fetch to Firestore REST API (bypasses SDK entirely)
+    setDebug(`SDK toggling…`);
     try {
-      const token = await user.getIdToken();
-      const res = await Promise.race([
-        fetch(
-          `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/articles/${articleId}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fields: {
-                likeCount: { integerValue: "1" },
-                commentCount: { integerValue: "0" },
-              },
-            }),
-          }
-        ),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("fetch timeout 8s")), 8000)),
+      const result = await Promise.race([
+        toggleLike(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("SDK timeout 8s")), 8000)),
       ]);
-      const data = await res.json();
-      if (res.ok) {
-        setDebug(`REST OK! ${res.status}`);
-      } else {
-        setDebug(`REST ${res.status}: ${JSON.stringify(data.error?.message || data).slice(0, 200)}`);
-      }
+      setDebug(`SDK done: liked=${result}`);
     } catch (e: unknown) {
-      setDebug(`REST FAIL: ${e instanceof Error ? e.message : String(e)}`);
+      setDebug(`SDK FAIL: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
