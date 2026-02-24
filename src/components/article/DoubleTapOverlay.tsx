@@ -11,38 +11,68 @@ interface HeartBurst {
   scale: number;
 }
 
+const TAP_MOVE_THRESHOLD = 10;
+
 export default function DoubleTapOverlay({ onDoubleTap, children }: { onDoubleTap: () => void; children: ReactNode }) {
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const lastTapRef = useRef(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      // Ignore non-primary buttons and button/link taps
-      if (e.button !== 0) return;
-      if ((e.target as HTMLElement).closest("button, a, input, [role='button']")) return;
+  const spawnHeart = useCallback((x: number, y: number) => {
+    const id = Date.now();
+    setHearts((prev) => [
+      ...prev,
+      { id, x, y, rotation: Math.random() * 30 - 15, scale: 0.9 + Math.random() * 0.3 },
+    ]);
+    setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 900);
+  }, []);
 
+  const handleTap = useCallback(
+    (x: number, y: number, target: HTMLElement, currentTarget: HTMLElement) => {
+      if (target.closest("button, a, input, [role='button']")) return;
       const now = Date.now();
       if (now - lastTapRef.current < 350) {
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const id = now;
-        setHearts((prev) => [
-          ...prev,
-          { id, x, y, rotation: Math.random() * 30 - 15, scale: 0.9 + Math.random() * 0.3 },
-        ]);
-        setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 900);
+        const rect = currentTarget.getBoundingClientRect();
+        spawnHeart(x - rect.left, y - rect.top);
         onDoubleTap();
         lastTapRef.current = 0;
       } else {
         lastTapRef.current = now;
       }
     },
-    [onDoubleTap]
+    [onDoubleTap, spawnHeart]
+  );
+
+  // Touch events — reliable on mobile (pointerup can be cancelled by scroll containers)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStartRef.current) return;
+      const t = e.changedTouches[0];
+      const dx = Math.abs(t.clientX - touchStartRef.current.x);
+      const dy = Math.abs(t.clientY - touchStartRef.current.y);
+      touchStartRef.current = null;
+      if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) { lastTapRef.current = 0; return; }
+      handleTap(t.clientX, t.clientY, e.target as HTMLElement, e.currentTarget as HTMLElement);
+    },
+    [handleTap]
+  );
+
+  // Pointer events — desktop mouse only (skip touch to avoid double-firing)
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      handleTap(e.clientX, e.clientY, e.target as HTMLElement, e.currentTarget as HTMLElement);
+    },
+    [handleTap]
   );
 
   return (
-    <div className="relative" onPointerUp={handlePointerUp}>
+    <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onPointerUp={handlePointerUp}>
       {children}
       <AnimatePresence>
         {hearts.map((heart) => (
