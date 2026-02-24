@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getDoc, setDoc, mergeDoc, deleteDoc } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 
@@ -9,6 +9,7 @@ export function useLike(articleId: string) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
+  const busyRef = useRef(false);
 
   // Poll article stats
   useEffect(() => {
@@ -43,7 +44,8 @@ export function useLike(articleId: string) {
   }, [articleId, user]);
 
   const toggleLike = useCallback(async () => {
-    if (!user) return false;
+    if (!user || busyRef.current) return false;
+    busyRef.current = true;
     const wasLiked = liked;
 
     // Optimistic update — reflect in UI immediately
@@ -71,6 +73,8 @@ export function useLike(articleId: string) {
       setLikeCount((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1));
       console.error("Like error:", error);
       throw error;
+    } finally {
+      busyRef.current = false;
     }
   }, [user, articleId, liked]);
 
