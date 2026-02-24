@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getDoc, setDoc, mergeDoc, addDoc, queryDocs } from "@/lib/firebase/firestore-rest";
+import { getDoc, setDoc, mergeDoc, addDoc, deleteDoc, queryDocs } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { CommentDoc } from "@/types/firebase";
 
@@ -61,5 +61,44 @@ export function useComments(articleId: string) {
     [user, articleId]
   );
 
-  return { comments, loading, addComment };
+  const refreshComments = useCallback(async () => {
+    try {
+      const docs = await queryDocs(`comments/${articleId}/messages`, "timestamp", "DESCENDING");
+      setComments(docs.map(({ id, ...fields }) => ({ id, ...fields } as unknown as CommentDoc)));
+    } catch { /* ignore */ }
+  }, [articleId]);
+
+  const editComment = useCallback(
+    async (commentId: string, newText: string) => {
+      if (!user || !newText.trim()) return;
+      try {
+        await mergeDoc(`comments/${articleId}/messages/${commentId}`, {
+          text: newText.trim(),
+          edited: true,
+        });
+        await refreshComments();
+      } catch (error) {
+        console.error("Edit comment error:", error);
+      }
+    },
+    [user, articleId, refreshComments]
+  );
+
+  const removeComment = useCallback(
+    async (commentId: string) => {
+      if (!user) return;
+      try {
+        await deleteDoc(`comments/${articleId}/messages/${commentId}`);
+        const article = await getDoc(`articles/${articleId}`);
+        const currentCount = (article?.commentCount as number) || 1;
+        await mergeDoc(`articles/${articleId}`, { commentCount: Math.max(0, currentCount - 1) });
+        await refreshComments();
+      } catch (error) {
+        console.error("Delete comment error:", error);
+      }
+    },
+    [user, articleId, refreshComments]
+  );
+
+  return { comments, loading, addComment, editComment, removeComment };
 }

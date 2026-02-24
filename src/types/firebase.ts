@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export interface CommentDoc {
   id: string;
   text: string;
@@ -7,5 +5,6 @@ export interface CommentDoc {
   userName: string;
   userPhoto: string | null;
   isAnonymous: boolean;
-  timestamp: Timestamp;
+  timestamp: string;
+  edited?: boolean;
 }

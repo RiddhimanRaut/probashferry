@@ -37,6 +37,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const [tocOpen, setTocOpen] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTouchTap = useRef(0);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -89,8 +91,20 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         if (dx < 0) goNext();
         else goPrev();
       } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
-        // Tap — toggle controls
-        setShowControls((prev) => !prev);
+        const now = Date.now();
+        const isDoubleTap = now - lastTouchTap.current < 300;
+        lastTouchTap.current = now;
+
+        // Cancel any pending single-tap
+        if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
+
+        // Only schedule controls toggle for single taps, not double taps
+        if (!isDoubleTap) {
+          singleTapTimer.current = setTimeout(() => {
+            setShowControls((prev) => !prev);
+            singleTapTimer.current = null;
+          }, 300);
+        }
       }
 
       touchStart.current = null;
