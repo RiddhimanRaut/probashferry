@@ -56,14 +56,16 @@ export default function CoverPanel({
       </motion.div>
 
       {/* Swipe cue */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/25 text-xs z-10"
-        animate={{ x: [0, -6, 0] }}
-        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-      >
-        <ChevronLeft size={14} />
-        <span className="uppercase tracking-widest">Swipe</span>
-      </motion.div>
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
+        <motion.div
+          className="flex items-center gap-2 text-white/25 text-xs"
+          animate={{ x: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        >
+          <ChevronLeft size={14} />
+          <span className="uppercase tracking-widest">Swipe</span>
+        </motion.div>
+      </div>
     </div>
   );
 }
