@@ -125,15 +125,18 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Controls — position indicator + arrows + TOC — appear on tap */}
+      {/* Controls — position indicator + arrows + TOC — appear on tap (not on cover) */}
       <AnimatePresence>
-        {showControls && (
+        {showControls && !onCover && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
+            {/* Translucent backdrop at bottom so controls are readable */}
+            <div className="fixed bottom-0 left-0 right-0 h-20 z-40 bg-gradient-to-t from-paper via-paper/80 to-transparent pointer-events-none" />
+
             {/* Position indicator with directional arrows */}
             <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
               <button
@@ -141,11 +144,11 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
                 className={`transition-opacity ${canGoPrev ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
                 aria-label="Previous"
               >
-                <ChevronLeft size={16} className={onCover ? "text-white" : "text-charcoal"} />
+                <ChevronLeft size={16} className="text-charcoal" />
               </button>
 
-              <span className={`text-xs tracking-widest tabular-nums ${onCover ? "text-white/50" : "text-charcoal/40"}`}>
-                {currentIndex + 1} / {totalPanels}
+              <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
+                {currentIndex} / {articles.length}
               </span>
 
               <button
@@ -153,7 +156,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
                 className={`transition-opacity ${canGoNext ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
                 aria-label="Next"
               >
-                <ChevronRight size={16} className={onCover ? "text-white" : "text-charcoal"} />
+                <ChevronRight size={16} className="text-charcoal" />
               </button>
             </div>
 
