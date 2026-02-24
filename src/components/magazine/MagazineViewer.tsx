@@ -34,19 +34,35 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
 
   const [showControls, setShowControls] = useState(false);
+  const [tocOpen, setTocOpen] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
 
-  const resetHideTimer = useCallback(() => {
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setShowControls(false), CONTROLS_TIMEOUT);
+  const clearHideTimer = useCallback(() => {
+    if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
   }, []);
 
-  // Auto-hide when controls become visible
+  const resetHideTimer = useCallback(() => {
+    clearHideTimer();
+    hideTimer.current = setTimeout(() => setShowControls(false), CONTROLS_TIMEOUT);
+  }, [clearHideTimer]);
+
+  // Auto-hide when controls visible, but pause timer while TOC is open
   useEffect(() => {
-    if (showControls) resetHideTimer();
-    return () => { if (hideTimer.current) clearTimeout(hideTimer.current); };
-  }, [showControls, resetHideTimer]);
+    if (showControls && !tocOpen) resetHideTimer();
+    if (tocOpen) clearHideTimer();
+    return () => clearHideTimer();
+  }, [showControls, tocOpen, resetHideTimer, clearHideTimer]);
+
+  // Close TOC when controls hide
+  useEffect(() => {
+    if (!showControls) setTocOpen(false);
+  }, [showControls]);
+
+  const handleTocOpenChange = useCallback((open: boolean) => {
+    setTocOpen(open);
+    if (!open) resetHideTimer();
+  }, [resetHideTimer]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -60,6 +76,13 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       const dx = touch.clientX - touchStart.current.x;
       const dy = touch.clientY - touchStart.current.y;
       const dt = Date.now() - touchStart.current.time;
+
+      // Ignore taps on buttons/interactive elements — let them handle their own clicks
+      const target = e.target as HTMLElement;
+      if (target.closest("button, a, [role='button']")) {
+        touchStart.current = null;
+        return;
+      }
 
       if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) {
         // Swipe — navigate
@@ -181,7 +204,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} />
+              <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} open={tocOpen} onOpenChange={handleTocOpenChange} />
             </motion.div>
           </>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+// no local state — controlled by parent
 import { motion, AnimatePresence } from "framer-motion";
 import { List, X } from "lucide-react";
 import { ArticleMeta } from "@/types/article";
@@ -9,20 +9,20 @@ interface TableOfContentsProps {
   articles: ArticleMeta[];
   currentIndex: number;
   onSelect: (index: number) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function TableOfContents({ articles, currentIndex, onSelect }: TableOfContentsProps) {
-  const [open, setOpen] = useState(false);
-
+export default function TableOfContents({ articles, currentIndex, onSelect, open, onOpenChange }: TableOfContentsProps) {
   const handleSelect = (i: number) => {
     onSelect(i + 1); // +1 for cover panel
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
     <>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => onOpenChange(!open)}
         className="fixed bottom-6 right-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center safe-bottom"
         aria-label="Table of contents"
       >
@@ -37,7 +37,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect }: Ta
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-40"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
             />
             <motion.div
               initial={{ y: "100%" }}
