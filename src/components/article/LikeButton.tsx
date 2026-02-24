@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
+import { getFirebaseDb } from "@/lib/firebase/config";
 
 export default function LikeButton({ articleId }: { articleId: string }) {
   const { liked, likeCount, toggleLike } = useLike(articleId);
@@ -17,12 +19,21 @@ export default function LikeButton({ articleId }: { articleId: string }) {
       promptSignIn();
       return;
     }
-    setDebug(`user=${user.uid.slice(0, 8)}… toggling…`);
+
+    // Direct minimal Firestore test — bypasses all hook logic
+    setDebug(`pid=${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID} uid=${user.uid.slice(0, 6)} writing…`);
     try {
-      const result = await toggleLike();
-      setDebug(`done: liked=${result}`);
+      const db = getFirebaseDb();
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout after 8s")), 8000));
+      const write = setDoc(doc(db, "articles", articleId), {
+        likeCount: 1,
+        commentCount: 0,
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+      await Promise.race([write, timeout]);
+      setDebug("write succeeded!");
     } catch (e: unknown) {
-      setDebug(`error: ${e instanceof Error ? e.message : String(e)}`);
+      setDebug(`FAIL: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
