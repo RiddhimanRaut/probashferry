@@ -12,7 +12,7 @@ export default function CoverPanel({
   issueTitle,
 }: CoverPanelProps) {
   return (
-    <div className="h-[100dvh] w-screen relative flex flex-col items-center justify-center bg-charcoal overflow-hidden">
+    <div className="h-full w-full absolute inset-0 flex flex-col items-center justify-center bg-charcoal overflow-hidden">
       {/* Full-bleed cover image */}
       <div className="absolute inset-0">
         <img
