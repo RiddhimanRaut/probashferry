@@ -54,23 +54,29 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const lastTouchTap = useRef({ time: 0, x: 0, y: 0 });
   const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
   const lastTouchDoubleTap = useRef(0);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
 
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    setIsAtBottom(el.scrollTop >= el.scrollHeight - el.clientHeight - 20);
-  }, []);
+  const getScrollContainer = useCallback(
+    () => document.querySelector<HTMLElement>("[data-scroll-container]"),
+    []
+  );
+
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      setIsAtBottom(el.scrollTop >= el.scrollHeight - el.clientHeight - 20);
+    },
+    []
+  );
 
   const handleScrollToggle = useCallback(() => {
-    const el = scrollContainerRef.current;
+    const el = getScrollContainer();
     if (!el) return;
     const atBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 20;
     el.scrollTo({ top: atBottom ? 0 : el.scrollHeight, behavior: "smooth" });
-  }, []);
+  }, [getScrollContainer]);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -232,7 +238,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             x: { type: "tween", duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
             opacity: { duration: 0.15 },
           }}
-          ref={scrollContainerRef}
+          data-scroll-container
           onScroll={handleScroll}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         >
