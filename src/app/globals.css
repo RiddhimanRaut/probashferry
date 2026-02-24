@@ -28,6 +28,10 @@
   html {
     @apply scroll-smooth;
   }
+  /* Disable double-tap-to-zoom (keeps pinch-to-zoom for accessibility) */
+  * {
+    touch-action: manipulation;
+  }
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);

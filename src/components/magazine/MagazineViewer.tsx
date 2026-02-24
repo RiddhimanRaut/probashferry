@@ -11,7 +11,9 @@ import TableOfContents from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
 const SWIPE_THRESHOLD = 60;
-const TAP_THRESHOLD = 10;
+const TAP_THRESHOLD = 25;      // px — finger can move up to 25px and still count as a tap
+const TAP_HOLD_LIMIT = 500;    // ms — taps held up to 500ms count (was 300, too tight)
+const DOUBLE_TAP_WINDOW = 400; // ms — time between two taps to count as double-tap
 const CONTROLS_TIMEOUT = 3000;
 
 const panelVariants = {
@@ -91,9 +93,10 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         // Swipe — navigate
         if (dx < 0) goNext();
         else goPrev();
-      } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
+      } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < TAP_HOLD_LIMIT) {
+        // It's a tap (finger barely moved, held briefly)
         const now = Date.now();
-        const isDoubleTap = now - lastTouchTap.current < 300;
+        const isDoubleTap = now - lastTouchTap.current < DOUBLE_TAP_WINDOW;
         lastTouchTap.current = now;
 
         // Cancel any pending single-tap
@@ -109,7 +112,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
           singleTapTimer.current = setTimeout(() => {
             setShowControls((prev) => !prev);
             singleTapTimer.current = null;
-          }, 300);
+          }, DOUBLE_TAP_WINDOW);
         }
       }
 
