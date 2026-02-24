@@ -1,6 +1,6 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,8 +12,21 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+function getApp(): FirebaseApp {
+  return getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+}
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+let _auth: Auth;
+let _db: Firestore;
+
 export const googleProvider = new GoogleAuthProvider();
+
+export function getFirebaseAuth(): Auth {
+  if (!_auth) _auth = getAuth(getApp());
+  return _auth;
+}
+
+export function getFirebaseDb(): Firestore {
+  if (!_db) _db = getFirestore(getApp());
+  return _db;
+}

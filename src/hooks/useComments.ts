@@ -13,7 +13,7 @@ import {
   increment,
   getDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
+import { getFirebaseDb } from "@/lib/firebase/config";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { CommentDoc } from "@/types/firebase";
 
@@ -23,6 +23,7 @@ export function useComments(articleId: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const db = getFirebaseDb();
     const ref = collection(db, "comments", articleId, "messages");
     const q = query(ref, orderBy("timestamp", "desc"));
     return onSnapshot(q, (snap) => {
@@ -34,6 +35,7 @@ export function useComments(articleId: string) {
   const addComment = useCallback(
     async (text: string, isAnonymous: boolean) => {
       if (!user || !text.trim()) return;
+      const db = getFirebaseDb();
       const articleRef = doc(db, "articles", articleId);
       const commentsRef = collection(db, "comments", articleId, "messages");
       try {

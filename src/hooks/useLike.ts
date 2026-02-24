@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   getDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
+import { getFirebaseDb } from "@/lib/firebase/config";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export function useLike(articleId: string) {
@@ -19,6 +19,7 @@ export function useLike(articleId: string) {
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
+    const db = getFirebaseDb();
     const ref = doc(db, "articles", articleId);
     return onSnapshot(ref, (snap) => {
       if (snap.exists()) setLikeCount(snap.data().likeCount || 0);
@@ -27,12 +28,14 @@ export function useLike(articleId: string) {
 
   useEffect(() => {
     if (!user) { setLiked(false); return; }
+    const db = getFirebaseDb();
     const ref = doc(db, "likes", articleId, "users", user.uid);
     return onSnapshot(ref, (snap) => setLiked(snap.exists()));
   }, [articleId, user]);
 
   const toggleLike = useCallback(async () => {
     if (!user) return false;
+    const db = getFirebaseDb();
     const articleRef = doc(db, "articles", articleId);
     const likeRef = doc(db, "likes", articleId, "users", user.uid);
     try {

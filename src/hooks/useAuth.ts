@@ -7,14 +7,14 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase/config";
+import { getFirebaseAuth, googleProvider } from "@/lib/firebase/config";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (u) => {
       setUser(u);
       setLoading(false);
     });
@@ -23,7 +23,7 @@ export function useAuth() {
 
   const signIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(getFirebaseAuth(), googleProvider);
     } catch (error) {
       console.error("Sign in error:", error);
     }
@@ -31,7 +31,7 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      await firebaseSignOut(getFirebaseAuth());
     } catch (error) {
       console.error("Sign out error:", error);
     }
