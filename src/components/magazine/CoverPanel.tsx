@@ -55,16 +55,12 @@ export default function CoverPanel({
         </p>
       </motion.div>
 
-      {/* Swipe cue */}
+      {/* Swipe cue — CSS animation so it works on first load (no hydration delay) */}
       <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
-        <motion.div
-          className="flex items-center gap-2 text-white/25 text-xs"
-          animate={{ x: [0, -6, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-        >
+        <div className="flex items-center gap-2 text-white/25 text-xs animate-nudge">
           <ChevronLeft size={14} />
           <span className="uppercase tracking-widest">Swipe</span>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

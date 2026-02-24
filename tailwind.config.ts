@@ -21,6 +21,15 @@ const config: Config = {
         body: ["var(--font-inter)", "sans-serif"],
         bengali: ["var(--font-noto-bengali)", "serif"],
       },
+      keyframes: {
+        nudge: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(-6px)" },
+        },
+      },
+      animation: {
+        nudge: "nudge 2s ease-in-out infinite",
+      },
       typography: {
         DEFAULT: {
           css: {
