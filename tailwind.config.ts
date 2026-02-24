@@ -26,9 +26,14 @@ const config: Config = {
           "0%, 100%": { transform: "translateX(0)" },
           "50%": { transform: "translateX(-6px)" },
         },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(30px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         nudge: "nudge 2s ease-in-out infinite",
+        "fade-up": "fade-up 1s ease-out 0.2s both",
       },
       typography: {
         DEFAULT: {
