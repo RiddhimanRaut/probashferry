@@ -6,7 +6,6 @@ import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
-import PanelDots from "./PanelDots";
 import TableOfContents from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
@@ -92,7 +91,6 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         </motion.div>
       </AnimatePresence>
 
-      <PanelDots total={totalPanels} current={currentIndex} onDotClick={goTo} />
       <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} />
     </div>
   );
