@@ -72,3 +72,13 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 }
+
+/* In fullscreen PWA, no safe area insets needed */
+@media (display-mode: fullscreen) {
+  .safe-top {
+    padding-top: 0px !important;
+  }
+  .safe-bottom {
+    padding-bottom: 0px !important;
+  }
+}
