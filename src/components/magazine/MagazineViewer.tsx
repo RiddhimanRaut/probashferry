@@ -8,6 +8,7 @@ import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
 import PanelDots from "./PanelDots";
 import TableOfContents from "./TableOfContents";
+import Header from "@/components/layout/Header";
 
 const SWIPE_THRESHOLD = 60;
 
@@ -31,12 +32,10 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
 
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
-  const swiping = useRef(false);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    swiping.current = false;
   }, []);
 
   const handleTouchEnd = useCallback(
@@ -47,7 +46,6 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       const dy = touch.clientY - touchStart.current.y;
       const dt = Date.now() - touchStart.current.time;
 
-      // Only count as horizontal swipe if horizontal movement dominates vertical
       if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) {
         if (dx < 0) goNext();
         else goPrev();
@@ -58,12 +56,17 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     [goNext, goPrev]
   );
 
+  const onCover = currentIndex === 0;
+
   return (
     <div
       className="fixed inset-0 overflow-hidden bg-paper"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Header hidden on cover, visible on articles */}
+      {!onCover && <Header />}
+
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <motion.div
           key={currentIndex}
@@ -78,7 +81,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
           }}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         >
-          {currentIndex === 0 ? (
+          {onCover ? (
             <CoverPanel />
           ) : (
             <ArticlePanel
