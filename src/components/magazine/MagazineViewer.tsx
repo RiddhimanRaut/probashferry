@@ -89,10 +89,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         if (dx < 0) goNext();
         else goPrev();
       } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
-        // Tap — enter fullscreen if not already (Android), then toggle controls
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
+        // Tap — toggle controls
         setShowControls((prev) => !prev);
       }
 
@@ -135,8 +132,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "tween", duration: 0.35, ease: "easeOut" },
-            opacity: { duration: 0.2 },
+            x: { type: "tween", duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
+            opacity: { duration: 0.15 },
           }}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         >
