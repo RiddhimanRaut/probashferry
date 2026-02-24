@@ -125,43 +125,65 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Controls — position indicator + arrows + TOC — appear on tap (not on cover) */}
+      {/* Controls — appear on tap */}
       <AnimatePresence>
-        {showControls && !onCover && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Translucent backdrop at bottom so controls are readable */}
-            <div className="fixed bottom-0 left-0 right-0 h-20 z-40 bg-gradient-to-t from-paper via-paper/80 to-transparent pointer-events-none" />
+        {showControls && (
+          <>
+            {/* Translucent backdrop — only on article panels, fades in with controls */}
+            {!onCover && (
+              <motion.div
+                key="backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-t from-paper via-paper/85 to-transparent pointer-events-none"
+              />
+            )}
 
-            {/* Position indicator with directional arrows */}
-            <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
-              <button
-                onClick={goPrev}
-                className={`transition-opacity ${canGoPrev ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
-                aria-label="Previous"
+            {/* Position indicator with directional arrows — only on articles */}
+            {!onCover && (
+              <motion.div
+                key="nav"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
               >
-                <ChevronLeft size={16} className="text-charcoal" />
-              </button>
+                <button
+                  onClick={goPrev}
+                  className={`transition-opacity ${canGoPrev ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
+                  aria-label="Previous"
+                >
+                  <ChevronLeft size={16} className="text-charcoal" />
+                </button>
 
-              <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
-                {currentIndex} / {articles.length}
-              </span>
+                <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
+                  {currentIndex} / {articles.length}
+                </span>
 
-              <button
-                onClick={goNext}
-                className={`transition-opacity ${canGoNext ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
-                aria-label="Next"
-              >
-                <ChevronRight size={16} className="text-charcoal" />
-              </button>
-            </div>
+                <button
+                  onClick={goNext}
+                  className={`transition-opacity ${canGoNext ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
+                  aria-label="Next"
+                >
+                  <ChevronRight size={16} className="text-charcoal" />
+                </button>
+              </motion.div>
+            )}
 
-            <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} />
-          </motion.div>
+            {/* TOC button — always available (cover + articles) */}
+            <motion.div
+              key="toc"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
