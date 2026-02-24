@@ -1,19 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-  doc,
-  setDoc,
-  increment,
-  getDoc,
-} from "firebase/firestore";
-import { getFirebaseDb } from "@/lib/firebase/config";
+import { getDoc, setDoc, mergeDoc, addDoc, queryDocs } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { CommentDoc } from "@/types/firebase";
 
@@ -22,36 +10,50 @@ export function useComments(articleId: string) {
   const [comments, setComments] = useState<CommentDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Poll comments
   useEffect(() => {
-    const db = getFirebaseDb();
-    const ref = collection(db, "comments", articleId, "messages");
-    const q = query(ref, orderBy("timestamp", "desc"));
-    return onSnapshot(q, (snap) => {
-      setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CommentDoc)));
-      setLoading(false);
-    });
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const docs = await queryDocs(`comments/${articleId}/messages`, "timestamp", "DESCENDING");
+        if (!cancelled) {
+          setComments(docs.map(({ id, ...fields }) => ({ id, ...fields } as unknown as CommentDoc)));
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => { cancelled = true; clearInterval(id); };
   }, [articleId]);
 
   const addComment = useCallback(
     async (text: string, isAnonymous: boolean) => {
       if (!user || !text.trim()) return;
-      const db = getFirebaseDb();
-      const articleRef = doc(db, "articles", articleId);
-      const commentsRef = collection(db, "comments", articleId, "messages");
       try {
-        const snap = await getDoc(articleRef);
-        if (!snap.exists()) {
-          await setDoc(articleRef, { likeCount: 0, commentCount: 0, createdAt: serverTimestamp() });
+        // Ensure article doc exists
+        const article = await getDoc(`articles/${articleId}`);
+        if (!article) {
+          await setDoc(`articles/${articleId}`, { likeCount: 0, commentCount: 0 });
         }
-        await addDoc(commentsRef, {
+
+        await addDoc(`comments/${articleId}/messages`, {
           text: text.trim(),
           userId: user.uid,
           userName: isAnonymous ? "Anonymous" : user.displayName || "User",
           userPhoto: isAnonymous ? null : user.photoURL,
           isAnonymous,
-          timestamp: serverTimestamp(),
+          timestamp: new Date().toISOString(),
         });
-        await setDoc(articleRef, { commentCount: increment(1) }, { merge: true });
+
+        const currentCount = (article?.commentCount as number) || 0;
+        await mergeDoc(`articles/${articleId}`, { commentCount: currentCount + 1 });
+
+        // Refresh comments immediately
+        const docs = await queryDocs(`comments/${articleId}/messages`, "timestamp", "DESCENDING");
+        setComments(docs.map(({ id, ...fields }) => ({ id, ...fields } as unknown as CommentDoc)));
       } catch (error) {
         console.error("Comment error:", error);
       }
