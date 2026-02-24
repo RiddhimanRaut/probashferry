@@ -1,9 +1,10 @@
 "use client";
 
-// no local state — controlled by parent
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { List, X } from "lucide-react";
+import { List, X, Heart } from "lucide-react";
 import { ArticleMeta } from "@/types/article";
+import { getDoc } from "@/lib/firebase/firestore-rest";
 
 interface TableOfContentsProps {
   articles: ArticleMeta[];
@@ -15,8 +16,31 @@ interface TableOfContentsProps {
 }
 
 export default function TableOfContents({ articles, currentIndex, onSelect, open, onOpenChange, visible }: TableOfContentsProps) {
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  // Fetch like counts when TOC opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        articles.map(async (a) => {
+          try {
+            const data = await getDoc(`articles/${a.slug}`);
+            counts[a.slug] = (data?.likeCount as number) || 0;
+          } catch {
+            counts[a.slug] = 0;
+          }
+        })
+      );
+      if (!cancelled) setLikeCounts(counts);
+    })();
+    return () => { cancelled = true; };
+  }, [open, articles]);
+
   const handleSelect = (i: number) => {
-    onSelect(i + 1); // +1 for cover panel
+    onSelect(i + 1);
     onOpenChange(false);
   };
 
@@ -56,6 +80,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect, open
                 <div className="space-y-1">
                   {articles.map((article, i) => {
                     const isActive = i + 1 === currentIndex;
+                    const count = likeCounts[article.slug] || 0;
                     return (
                       <button
                         key={article.slug}
@@ -65,9 +90,17 @@ export default function TableOfContents({ articles, currentIndex, onSelect, open
                         }`}
                       >
                         <p className="font-medium text-sm">{article.title}</p>
-                        <p className="text-xs text-charcoal/40 mt-0.5">
-                          {article.author} &middot; {article.readingTime} min
-                        </p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-xs text-charcoal/40">
+                            {article.author} &middot; {article.readingTime} min
+                          </span>
+                          {count > 0 && (
+                            <span className="flex items-center gap-1 text-xs">
+                              <Heart size={11} className="fill-sindoor text-sindoor" />
+                              <span className="text-sindoor/70 tabular-nums">{count}</span>
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}

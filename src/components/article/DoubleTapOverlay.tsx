@@ -15,10 +15,14 @@ export default function DoubleTapOverlay({ onDoubleTap, children }: { onDoubleTa
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const lastTapRef = useRef(0);
 
-  const handleTap = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      // Ignore non-primary buttons and button/link taps
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest("button, a, input, [role='button']")) return;
+
       const now = Date.now();
-      if (now - lastTapRef.current < 300) {
+      if (now - lastTapRef.current < 350) {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -38,7 +42,7 @@ export default function DoubleTapOverlay({ onDoubleTap, children }: { onDoubleTa
   );
 
   return (
-    <div className="relative" onClick={handleTap}>
+    <div className="relative" onPointerUp={handlePointerUp}>
       {children}
       <AnimatePresence>
         {hearts.map((heart) => (
