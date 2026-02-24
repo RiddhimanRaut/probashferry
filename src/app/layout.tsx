@@ -27,6 +27,15 @@ export const metadata: Metadata = {
   description:
     "A digital magazine celebrating the Bengali diaspora. Stories of culture, nostalgia, and identity from Bengalis around the world.",
   keywords: ["Bengali", "diaspora", "magazine", "culture", "probashi"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Probashferry",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
