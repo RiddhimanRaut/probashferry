@@ -45,7 +45,7 @@ export default function CoverPanel({
         </p>
       </div>
 
-      {/* Swipe cue — CSS animation so it works on first load */}
+      {/* Swipe cue */}
       <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
         <div className="flex items-center gap-2 text-white/25 text-xs animate-nudge">
           <ChevronLeft size={14} />
