@@ -54,6 +54,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const lastTouchTap = useRef({ time: 0, x: 0, y: 0 });
   const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
   const lastTouchDoubleTap = useRef(0);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -89,6 +91,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   }, []);
 
   const fireDoubleTap = useCallback((x: number, y: number) => {
+    if (currentIndexRef.current === 0) return; // no hearts on cover
     spawnHeart(x, y);
     setDoubleTapEvent({ x, y, id: Date.now() });
   }, [spawnHeart]);
