@@ -16,9 +16,10 @@ import { useAuthContext } from "@/providers/AuthProvider";
 interface ArticlePanelProps {
   article: Article;
   isActive: boolean;
+  doubleTapEvent: { x: number; y: number; id: number } | null;
 }
 
-export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
+export default function ArticlePanel({ article, isActive, doubleTapEvent }: ArticlePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
 
@@ -51,7 +52,7 @@ export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-paper" />
       </div>
 
-      <DoubleTapOverlay onDoubleTap={handleDoubleTap}>
+      <DoubleTapOverlay onDoubleTap={handleDoubleTap} doubleTapEvent={doubleTapEvent}>
         <div className="px-5 md:px-8 lg:px-16 max-w-3xl mx-auto -mt-16 relative z-10">
           <ArticleHeader article={article} />
 

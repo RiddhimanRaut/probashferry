@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface HeartBurst {
@@ -11,12 +11,27 @@ interface HeartBurst {
   scale: number;
 }
 
-const TAP_MOVE_THRESHOLD = 10;
+export interface DoubleTapEvent {
+  x: number;
+  y: number;
+  id: number;
+}
 
-export default function DoubleTapOverlay({ onDoubleTap, children }: { onDoubleTap: () => void; children: ReactNode }) {
+export default function DoubleTapOverlay({
+  onDoubleTap,
+  doubleTapEvent,
+  children,
+}: {
+  onDoubleTap: () => void;
+  doubleTapEvent: DoubleTapEvent | null;
+  children: ReactNode;
+}) {
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
-  const lastTapRef = useRef(0);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef(0); // for desktop mouse double-tap
+  const lastEventId = useRef(0);
+  const onDoubleTapRef = useRef(onDoubleTap);
+  onDoubleTapRef.current = onDoubleTap;
 
   const spawnHeart = useCallback((x: number, y: number) => {
     const id = Date.now();
@@ -27,52 +42,37 @@ export default function DoubleTapOverlay({ onDoubleTap, children }: { onDoubleTa
     setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 900);
   }, []);
 
-  const handleTap = useCallback(
-    (x: number, y: number, target: HTMLElement, currentTarget: HTMLElement) => {
-      if (target.closest("button, a, input, [role='button']")) return;
+  // Touch double-tap: driven by parent (MagazineViewer detects it reliably)
+  useEffect(() => {
+    if (!doubleTapEvent || doubleTapEvent.id === lastEventId.current) return;
+    lastEventId.current = doubleTapEvent.id;
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      spawnHeart(doubleTapEvent.x - rect.left, doubleTapEvent.y - rect.top);
+    }
+    onDoubleTapRef.current();
+  }, [doubleTapEvent, spawnHeart]);
+
+  // Desktop mouse double-click (touch is handled by parent)
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      if ((e.target as HTMLElement).closest("button, a, input, [role='button']")) return;
       const now = Date.now();
-      if (now - lastTapRef.current < 350) {
-        const rect = currentTarget.getBoundingClientRect();
-        spawnHeart(x - rect.left, y - rect.top);
-        onDoubleTap();
+      if (now - lastTapRef.current < 400) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        spawnHeart(e.clientX - rect.left, e.clientY - rect.top);
+        onDoubleTapRef.current();
         lastTapRef.current = 0;
       } else {
         lastTapRef.current = now;
       }
     },
-    [onDoubleTap, spawnHeart]
-  );
-
-  // Touch events — reliable on mobile (pointerup can be cancelled by scroll containers)
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-  }, []);
-
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      if (!touchStartRef.current) return;
-      const t = e.changedTouches[0];
-      const dx = Math.abs(t.clientX - touchStartRef.current.x);
-      const dy = Math.abs(t.clientY - touchStartRef.current.y);
-      touchStartRef.current = null;
-      if (dx > TAP_MOVE_THRESHOLD || dy > TAP_MOVE_THRESHOLD) { lastTapRef.current = 0; return; }
-      handleTap(t.clientX, t.clientY, e.target as HTMLElement, e.currentTarget as HTMLElement);
-    },
-    [handleTap]
-  );
-
-  // Pointer events — desktop mouse only (skip touch to avoid double-firing)
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.pointerType !== "mouse" || e.button !== 0) return;
-      handleTap(e.clientX, e.clientY, e.target as HTMLElement, e.currentTarget as HTMLElement);
-    },
-    [handleTap]
+    [spawnHeart]
   );
 
   return (
-    <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onPointerUp={handlePointerUp}>
+    <div ref={containerRef} className="relative" onPointerUp={handlePointerUp}>
       {children}
       <AnimatePresence>
         {hearts.map((heart) => (

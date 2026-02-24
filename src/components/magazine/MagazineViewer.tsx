@@ -35,6 +35,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [doubleTapEvent, setDoubleTapEvent] = useState<{ x: number; y: number; id: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,8 +99,13 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         // Cancel any pending single-tap
         if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
 
-        // Only schedule controls toggle for single taps, not double taps
-        if (!isDoubleTap) {
+        if (isDoubleTap) {
+          // Emit double-tap event (ArticlePanel handles like + heart animation)
+          if (!target.closest("button, a, input, [role='button']")) {
+            setDoubleTapEvent({ x: touch.clientX, y: touch.clientY, id: now });
+          }
+        } else {
+          // Single tap — toggle controls after delay
           singleTapTimer.current = setTimeout(() => {
             setShowControls((prev) => !prev);
             singleTapTimer.current = null;
@@ -157,6 +163,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             <ArticlePanel
               article={articles[currentIndex - 1]}
               isActive={true}
+              doubleTapEvent={doubleTapEvent}
             />
           )}
         </motion.div>
