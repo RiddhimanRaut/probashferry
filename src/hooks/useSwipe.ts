@@ -1,9 +1,26 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+
+const STORAGE_KEY = "probashferry-panel";
 
 export function useSwipe(totalPanels: number) {
-  const [state, setState] = useState({ currentIndex: 0, direction: 0 });
+  const [state, setState] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const index = parseInt(saved, 10);
+        if (!isNaN(index) && index >= 0 && index < totalPanels) {
+          return { currentIndex: index, direction: 0 };
+        }
+      }
+    }
+    return { currentIndex: 0, direction: 0 };
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, String(state.currentIndex));
+  }, [state.currentIndex]);
 
   const goTo = useCallback(
     (index: number) => {
