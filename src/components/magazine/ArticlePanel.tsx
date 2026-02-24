@@ -28,7 +28,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
       if (parent) (scrollRef as React.MutableRefObject<HTMLElement | null>).current = parent;
     }
   }, []);
-  const { liked, commentCount, toggleLike } = useLike(article.slug);
+  const { liked, likeCount, commentCount, toggleLike } = useLike(article.slug);
   const { user, promptSignIn } = useAuthContext();
   const [commentsOpen, setCommentsOpen] = useState(false);
   const lastHandledTap = useRef(0);
@@ -73,7 +73,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
         />
 
         <div className="flex items-center gap-4 mt-8 py-4 border-t border-charcoal/5">
-          <LikeButton articleId={article.slug} />
+          <LikeButton liked={liked} likeCount={likeCount} toggleLike={toggleLike} />
           <button
             onClick={() => setCommentsOpen((o) => !o)}
             className="flex items-center gap-2 group transition-colors"

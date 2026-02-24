@@ -44,28 +44,31 @@ export function useLike(articleId: string) {
 
   const toggleLike = useCallback(async () => {
     if (!user) return false;
+    const wasLiked = liked;
+
+    // Optimistic update — reflect in UI immediately
+    setLiked(!wasLiked);
+    setLikeCount((prev) => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+
     try {
-      // Ensure article doc exists
       const article = await getDoc(`articles/${articleId}`);
       if (!article) {
         await setDoc(`articles/${articleId}`, { likeCount: 0, commentCount: 0 });
       }
-
       const currentCount = (article?.likeCount as number) || 0;
 
-      if (liked) {
+      if (wasLiked) {
         await deleteDoc(`likes/${articleId}/users/${user.uid}`);
         await mergeDoc(`articles/${articleId}`, { likeCount: Math.max(0, currentCount - 1) });
-        setLiked(false);
-        setLikeCount((prev) => Math.max(0, prev - 1));
       } else {
         await setDoc(`likes/${articleId}/users/${user.uid}`, { userId: user.uid });
         await mergeDoc(`articles/${articleId}`, { likeCount: currentCount + 1 });
-        setLiked(true);
-        setLikeCount((prev) => prev + 1);
       }
-      return !liked;
+      return !wasLiked;
     } catch (error) {
+      // Revert on failure
+      setLiked(wasLiked);
+      setLikeCount((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1));
       console.error("Like error:", error);
       throw error;
     }

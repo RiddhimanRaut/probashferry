@@ -2,11 +2,15 @@
 
 import { Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
 
-export default function LikeButton({ articleId }: { articleId: string }) {
-  const { liked, likeCount, toggleLike } = useLike(articleId);
+interface LikeButtonProps {
+  liked: boolean;
+  likeCount: number;
+  toggleLike: () => Promise<boolean | undefined>;
+}
+
+export default function LikeButton({ liked, likeCount, toggleLike }: LikeButtonProps) {
   const { user, promptSignIn } = useAuthContext();
 
   const handleClick = async () => {
