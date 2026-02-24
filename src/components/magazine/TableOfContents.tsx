@@ -11,9 +11,10 @@ interface TableOfContentsProps {
   onSelect: (index: number) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  visible: boolean;
 }
 
-export default function TableOfContents({ articles, currentIndex, onSelect, open, onOpenChange }: TableOfContentsProps) {
+export default function TableOfContents({ articles, currentIndex, onSelect, open, onOpenChange, visible }: TableOfContentsProps) {
   const handleSelect = (i: number) => {
     onSelect(i + 1); // +1 for cover panel
     onOpenChange(false);
@@ -21,13 +22,16 @@ export default function TableOfContents({ articles, currentIndex, onSelect, open
 
   return (
     <>
-      <button
+      <motion.button
         onClick={() => onOpenChange(!open)}
+        animate={{ opacity: visible ? 1 : 0, scale: visible ? 1 : 0.8 }}
+        transition={{ duration: 0.3 }}
         className="fixed bottom-6 right-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center safe-bottom"
         aria-label="Table of contents"
+        style={{ pointerEvents: visible ? "auto" : "none" }}
       >
         {open ? <X size={18} /> : <List size={18} />}
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {open && (

@@ -150,65 +150,53 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
       {/* Controls — appear on tap */}
       <AnimatePresence>
-        {showControls && (
+        {showControls && !onCover && (
           <>
-            {/* Translucent backdrop — only on article panels, fades in with controls */}
-            {!onCover && (
-              <motion.div
-                key="backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-t from-paper via-paper/85 to-transparent pointer-events-none"
-              />
-            )}
-
-            {/* Position indicator with directional arrows — only on articles */}
-            {!onCover && (
-              <motion.div
-                key="nav"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
-              >
-                <button
-                  onClick={goPrev}
-                  className={`transition-opacity ${canGoPrev ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
-                  aria-label="Previous"
-                >
-                  <ChevronLeft size={16} className="text-charcoal" />
-                </button>
-
-                <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
-                  {currentIndex} / {articles.length}
-                </span>
-
-                <button
-                  onClick={goNext}
-                  className={`transition-opacity ${canGoNext ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
-                  aria-label="Next"
-                >
-                  <ChevronRight size={16} className="text-charcoal" />
-                </button>
-              </motion.div>
-            )}
-
-            {/* TOC button — always available (cover + articles) */}
+            {/* Translucent backdrop — fades in with controls */}
             <motion.div
-              key="toc"
+              key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
+              className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-t from-paper via-paper/85 to-transparent pointer-events-none"
+            />
+
+            {/* Position indicator with directional arrows */}
+            <motion.div
+              key="nav"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
             >
-              <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} open={tocOpen} onOpenChange={handleTocOpenChange} />
+              <button
+                onClick={goPrev}
+                className={`transition-opacity ${canGoPrev ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
+                aria-label="Previous"
+              >
+                <ChevronLeft size={16} className="text-charcoal" />
+              </button>
+
+              <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
+                {currentIndex} / {articles.length}
+              </span>
+
+              <button
+                onClick={goNext}
+                className={`transition-opacity ${canGoNext ? "opacity-60 active:opacity-100" : "opacity-0 pointer-events-none"}`}
+                aria-label="Next"
+              >
+                <ChevronRight size={16} className="text-charcoal" />
+              </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      {/* TOC — always rendered, handles its own fade via visible prop */}
+      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
     </div>
   );
 }
