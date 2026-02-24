@@ -11,10 +11,18 @@ import TableOfContents from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
 const SWIPE_THRESHOLD = 60;
-const TAP_THRESHOLD = 25;      // px — finger can move up to 25px and still count as a tap
-const TAP_HOLD_LIMIT = 500;    // ms — taps held up to 500ms count (was 300, too tight)
-const DOUBLE_TAP_WINDOW = 400; // ms — time between two taps to count as double-tap
+const TAP_THRESHOLD = 25;
+const TAP_HOLD_LIMIT = 500;
+const DOUBLE_TAP_WINDOW = 400;
 const CONTROLS_TIMEOUT = 3000;
+
+interface HeartBurst {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+}
 
 const panelVariants = {
   enter: (direction: number) => ({
@@ -38,10 +46,12 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [doubleTapEvent, setDoubleTapEvent] = useState<{ x: number; y: number; id: number } | null>(null);
+  const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTouchTap = useRef(0);
+  const lastMouseTap = useRef(0);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -52,14 +62,12 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     hideTimer.current = setTimeout(() => setShowControls(false), CONTROLS_TIMEOUT);
   }, [clearHideTimer]);
 
-  // Auto-hide when controls visible, but pause timer while TOC is open
   useEffect(() => {
     if (showControls && !tocOpen) resetHideTimer();
     if (tocOpen) clearHideTimer();
     return () => clearHideTimer();
   }, [showControls, tocOpen, resetHideTimer, clearHideTimer]);
 
-  // Close TOC when controls hide
   useEffect(() => {
     if (!showControls) setTocOpen(false);
   }, [showControls]);
@@ -68,6 +76,22 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     setTocOpen(open);
     if (!open) resetHideTimer();
   }, [resetHideTimer]);
+
+  const spawnHeart = useCallback((x: number, y: number) => {
+    const id = Date.now() + Math.random();
+    setHearts((prev) => [
+      ...prev,
+      { id, x, y, rotation: Math.random() * 30 - 15, scale: 0.9 + Math.random() * 0.3 },
+    ]);
+    setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 1000);
+  }, []);
+
+  const fireDoubleTap = useCallback((x: number, y: number) => {
+    spawnHeart(x, y);
+    setDoubleTapEvent({ x, y, id: Date.now() });
+  }, [spawnHeart]);
+
+  // --- Touch handling (mobile) ---
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -82,33 +106,25 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       const dy = touch.clientY - touchStart.current.y;
       const dt = Date.now() - touchStart.current.time;
 
-      // Ignore taps on buttons/interactive elements — let them handle their own clicks
       const target = e.target as HTMLElement;
-      if (target.closest("button, a, [role='button']")) {
+      if (target.closest("button, a, input, [role='button']")) {
         touchStart.current = null;
         return;
       }
 
       if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) {
-        // Swipe — navigate
         if (dx < 0) goNext();
         else goPrev();
       } else if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < TAP_HOLD_LIMIT) {
-        // It's a tap (finger barely moved, held briefly)
         const now = Date.now();
         const isDoubleTap = now - lastTouchTap.current < DOUBLE_TAP_WINDOW;
         lastTouchTap.current = now;
 
-        // Cancel any pending single-tap
         if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
 
         if (isDoubleTap) {
-          // Emit double-tap event (ArticlePanel handles like + heart animation)
-          if (!target.closest("button, a, input, [role='button']")) {
-            setDoubleTapEvent({ x: touch.clientX, y: touch.clientY, id: now });
-          }
+          fireDoubleTap(touch.clientX, touch.clientY);
         } else {
-          // Single tap — toggle controls after delay
           singleTapTimer.current = setTimeout(() => {
             setShowControls((prev) => !prev);
             singleTapTimer.current = null;
@@ -118,7 +134,25 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
       touchStart.current = null;
     },
-    [goNext, goPrev]
+    [goNext, goPrev, fireDoubleTap]
+  );
+
+  // --- Mouse handling (desktop) ---
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("button, a, input, [role='button']")) return;
+
+      const now = Date.now();
+      if (now - lastMouseTap.current < DOUBLE_TAP_WINDOW) {
+        fireDoubleTap(e.clientX, e.clientY);
+        lastMouseTap.current = 0;
+      } else {
+        lastMouseTap.current = now;
+      }
+    },
+    [fireDoubleTap]
   );
 
   const onCover = currentIndex === 0;
@@ -130,8 +164,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       className="fixed inset-0 overflow-hidden bg-paper"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
     >
-      {/* Header hidden on cover, visible on articles — only when controls shown */}
       <AnimatePresence>
         {!onCover && showControls && (
           <motion.div
@@ -172,11 +206,45 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Controls — appear on tap */}
+      {/* Heart burst animation — fixed position, above everything */}
+      <AnimatePresence>
+        {hearts.map((heart) => (
+          <motion.div
+            key={heart.id}
+            className="fixed pointer-events-none"
+            style={{ left: heart.x, top: heart.y, zIndex: 9999 }}
+            initial={{ scale: 0, opacity: 0, x: "-50%", y: "-50%", rotate: heart.rotation }}
+            animate={{
+              scale: [0, 1.4, 1.1],
+              opacity: [0, 1, 0],
+              y: ["-50%", "-180%"],
+            }}
+            transition={{
+              duration: 0.9,
+              ease: "easeOut",
+              times: [0, 0.25, 1],
+            }}
+          >
+            <svg width="72" height="72" viewBox="0 0 56 56" fill="none">
+              <defs>
+                <radialGradient id={`hg-${heart.id}`} cx="40%" cy="35%">
+                  <stop offset="0%" stopColor="#E85D4A" />
+                  <stop offset="100%" stopColor="#A52422" />
+                </radialGradient>
+              </defs>
+              <path
+                d="M28 48C28 48 6 34 6 18C6 10 12 4 19 4C23.5 4 27 6.5 28 10C29 6.5 32.5 4 37 4C44 4 50 10 50 18C50 34 28 48 28 48Z"
+                fill={`url(#hg-${heart.id})`}
+              />
+            </svg>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      {/* Controls */}
       <AnimatePresence>
         {showControls && !onCover && (
           <>
-            {/* Translucent backdrop — fades in with controls */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -186,7 +254,6 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
               className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-t from-paper via-paper/85 to-transparent pointer-events-none"
             />
 
-            {/* Position indicator with directional arrows */}
             <motion.div
               key="nav"
               initial={{ opacity: 0 }}
@@ -219,7 +286,6 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         )}
       </AnimatePresence>
 
-      {/* TOC — always rendered, handles its own fade via visible prop */}
       <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
     </div>
   );
