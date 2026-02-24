@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
@@ -55,13 +55,21 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
   const lastTouchDoubleTap = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
 
-  const scrollToBottom = useCallback(() => {
+  const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (!el) return;
+    setIsAtBottom(el.scrollTop >= el.scrollHeight - el.clientHeight - 20);
   }, []);
+
+  const handleScrollToggle = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: isAtBottom ? 0 : el.scrollHeight, behavior: "smooth" });
+  }, [isAtBottom]);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -224,6 +232,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             opacity: { duration: 0.15 },
           }}
           ref={scrollContainerRef}
+          onScroll={handleScroll}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
         >
           {onCover ? (
@@ -287,16 +296,16 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             />
 
             <motion.button
-              key="scroll-bottom"
+              key="scroll-toggle"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              onClick={scrollToBottom}
+              onClick={handleScrollToggle}
               className="fixed bottom-6 left-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center"
-              aria-label="Scroll to bottom"
+              aria-label={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
             >
-              <ChevronDown size={18} />
+              {isAtBottom ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </motion.button>
 
             <motion.div
