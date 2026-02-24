@@ -2,6 +2,7 @@
 
 import { useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
@@ -56,6 +57,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   );
 
   const onCover = currentIndex === 0;
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < totalPanels - 1;
 
   return (
     <div
@@ -75,7 +78,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
+            x: { type: "tween", duration: 0.35, ease: "easeOut" },
             opacity: { duration: 0.2 },
           }}
           className="absolute inset-0 overflow-y-auto overflow-x-hidden"
@@ -90,6 +93,29 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Position indicator with directional arrows */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 pointer-events-auto">
+        <button
+          onClick={goPrev}
+          className={`transition-opacity ${canGoPrev ? "opacity-40 hover:opacity-70" : "opacity-0 pointer-events-none"}`}
+          aria-label="Previous"
+        >
+          <ChevronLeft size={16} className={onCover ? "text-white" : "text-charcoal"} />
+        </button>
+
+        <span className={`text-xs tracking-widest tabular-nums ${onCover ? "text-white/40" : "text-charcoal/30"}`}>
+          {currentIndex + 1} / {totalPanels}
+        </span>
+
+        <button
+          onClick={goNext}
+          className={`transition-opacity ${canGoNext ? "opacity-40 hover:opacity-70" : "opacity-0 pointer-events-none"}`}
+          aria-label="Next"
+        >
+          <ChevronRight size={16} className={onCover ? "text-white" : "text-charcoal"} />
+        </button>
+      </div>
 
       <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} />
     </div>
