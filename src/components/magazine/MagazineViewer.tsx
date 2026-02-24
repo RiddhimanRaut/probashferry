@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
@@ -9,8 +9,7 @@ import ArticlePanel from "./ArticlePanel";
 import PanelDots from "./PanelDots";
 import TableOfContents from "./TableOfContents";
 
-const SWIPE_THRESHOLD = 50;
-const SWIPE_VELOCITY = 500;
+const SWIPE_THRESHOLD = 60;
 
 const panelVariants = {
   enter: (direction: number) => ({
@@ -31,20 +30,40 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const totalPanels = articles.length + 1;
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
 
-  const handleDragEnd = useCallback(
-    (_: unknown, info: PanInfo) => {
-      const { offset, velocity } = info;
-      if (offset.x < -SWIPE_THRESHOLD || velocity.x < -SWIPE_VELOCITY) {
-        goNext();
-      } else if (offset.x > SWIPE_THRESHOLD || velocity.x > SWIPE_VELOCITY) {
-        goPrev();
+  const touchStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const swiping = useRef(false);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    swiping.current = false;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStart.current) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStart.current.x;
+      const dy = touch.clientY - touchStart.current.y;
+      const dt = Date.now() - touchStart.current.time;
+
+      // Only count as horizontal swipe if horizontal movement dominates vertical
+      if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) {
+        if (dx < 0) goNext();
+        else goPrev();
       }
+
+      touchStart.current = null;
     },
     [goNext, goPrev]
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-paper">
+    <div
+      className="fixed inset-0 overflow-hidden bg-paper"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <motion.div
           key={currentIndex}
@@ -57,10 +76,6 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             x: { type: "spring", stiffness: 300, damping: 30 },
             opacity: { duration: 0.2 },
           }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          onDragEnd={handleDragEnd}
           className="absolute inset-0"
         >
           {currentIndex === 0 ? (
