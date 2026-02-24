@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getDoc, setDoc, mergeDoc, deleteDoc } from "@/lib/firebase/firestore-rest";
+import { getDoc, setDoc, deleteDoc, incrementField } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export function useLike(articleId: string) {
@@ -10,14 +10,22 @@ export function useLike(articleId: string) {
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const busyRef = useRef(false);
+  const likedRef = useRef(false);
+  const suppressPollRef = useRef(false);
+
+  // Keep likedRef in sync with state
+  useEffect(() => {
+    likedRef.current = liked;
+  }, [liked]);
 
   // Poll article stats
   useEffect(() => {
     let cancelled = false;
     const poll = async () => {
+      if (suppressPollRef.current) return;
       try {
         const data = await getDoc(`articles/${articleId}`);
-        if (!cancelled && data) {
+        if (!cancelled && data && !suppressPollRef.current) {
           setLikeCount((data.likeCount as number) || 0);
           setCommentCount((data.commentCount as number) || 0);
         }
@@ -46,25 +54,27 @@ export function useLike(articleId: string) {
   const toggleLike = useCallback(async () => {
     if (!user || busyRef.current) return false;
     busyRef.current = true;
-    const wasLiked = liked;
+    suppressPollRef.current = true;
 
-    // Optimistic update — reflect in UI immediately
+    const wasLiked = likedRef.current;
+
+    // Optimistic update
     setLiked(!wasLiked);
     setLikeCount((prev) => wasLiked ? Math.max(0, prev - 1) : prev + 1);
 
     try {
+      // Ensure article doc exists
       const article = await getDoc(`articles/${articleId}`);
       if (!article) {
         await setDoc(`articles/${articleId}`, { likeCount: 0, commentCount: 0 });
       }
-      const currentCount = (article?.likeCount as number) || 0;
 
       if (wasLiked) {
         await deleteDoc(`likes/${articleId}/users/${user.uid}`);
-        await mergeDoc(`articles/${articleId}`, { likeCount: Math.max(0, currentCount - 1) });
+        await incrementField(`articles/${articleId}`, "likeCount", -1);
       } else {
         await setDoc(`likes/${articleId}/users/${user.uid}`, { userId: user.uid });
-        await mergeDoc(`articles/${articleId}`, { likeCount: currentCount + 1 });
+        await incrementField(`articles/${articleId}`, "likeCount", 1);
       }
       return !wasLiked;
     } catch (error) {
@@ -75,8 +85,10 @@ export function useLike(articleId: string) {
       throw error;
     } finally {
       busyRef.current = false;
+      // Keep poll suppressed briefly so the server-side write propagates
+      setTimeout(() => { suppressPollRef.current = false; }, 3000);
     }
-  }, [user, articleId, liked]);
+  }, [user, articleId]);
 
   return { liked, likeCount, commentCount, toggleLike };
 }
