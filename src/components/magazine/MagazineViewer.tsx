@@ -54,7 +54,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const lastTouchTap = useRef({ time: 0, x: 0, y: 0 });
   const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
   const lastTouchDoubleTap = useRef(0);
-  const [isAtBottom, setIsAtBottom] = useState(false);
+  const [scrollZone, setScrollZone] = useState<"top" | "middle" | "bottom">("top");
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
 
@@ -66,16 +66,17 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const el = e.currentTarget;
-      setIsAtBottom(el.scrollTop >= el.scrollHeight - el.clientHeight - 20);
+      const atTop = el.scrollTop <= 20;
+      const atBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 20;
+      setScrollZone(atTop ? "top" : atBottom ? "bottom" : "middle");
     },
     []
   );
 
-  const handleScrollToggle = useCallback(() => {
+  const scrollTo = useCallback((target: "top" | "bottom") => {
     const el = getScrollContainer();
     if (!el) return;
-    const atBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 20;
-    el.scrollTo({ top: atBottom ? 0 : el.scrollHeight, behavior: "smooth" });
+    el.scrollTo({ top: target === "top" ? 0 : el.scrollHeight, behavior: "smooth" });
   }, [getScrollContainer]);
 
   const clearHideTimer = useCallback(() => {
@@ -302,18 +303,30 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
               className="fixed bottom-0 left-0 right-0 h-24 z-40 bg-gradient-to-t from-paper via-paper/85 to-transparent pointer-events-none"
             />
 
-            <motion.button
-              key="scroll-toggle"
+            <motion.div
+              key="scroll-controls"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              onClick={handleScrollToggle}
-              className="fixed bottom-6 left-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center"
-              aria-label={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
+              className="fixed bottom-6 left-4 z-50 flex items-center rounded-full bg-charcoal/60 backdrop-blur-sm text-white"
             >
-              {isAtBottom ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </motion.button>
+              {scrollZone !== "top" && (
+                <button onClick={() => scrollTo("top")} aria-label="Scroll to top"
+                  className="w-8 h-8 flex items-center justify-center">
+                  <ChevronUp size={16} />
+                </button>
+              )}
+              {scrollZone === "middle" && (
+                <div className="w-px h-4 bg-white/20" />
+              )}
+              {scrollZone !== "bottom" && (
+                <button onClick={() => scrollTo("bottom")} aria-label="Scroll to bottom"
+                  className="w-8 h-8 flex items-center justify-center">
+                  <ChevronDown size={16} />
+                </button>
+              )}
+            </motion.div>
 
             <motion.div
               key="nav"
