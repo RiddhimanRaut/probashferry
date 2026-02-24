@@ -115,6 +115,63 @@ export async function deleteDoc(path: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`DELETE ${path}: ${res.status}`);
 }
 
+/**
+ * Atomic like toggle — batches the like-doc write and count increment
+ * into a single Firestore commit. No read needed; server-side increment.
+ */
+export async function commitLikeToggle(
+  articlePath: string,
+  likePath: string,
+  userId: string,
+  like: boolean
+): Promise<void> {
+  const headers = await authHeaders();
+  const articleName = `projects/${PID}/databases/(default)/documents/${articlePath}`;
+  const likeName = `projects/${PID}/databases/(default)/documents/${likePath}`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const writes: any[] = like
+    ? [
+        {
+          update: {
+            name: likeName,
+            fields: { userId: { stringValue: userId } },
+          },
+        },
+        {
+          transform: {
+            document: articleName,
+            fieldTransforms: [
+              { fieldPath: "likeCount", increment: { integerValue: 1 } },
+            ],
+          },
+        },
+      ]
+    : [
+        { delete: likeName },
+        {
+          transform: {
+            document: articleName,
+            fieldTransforms: [
+              { fieldPath: "likeCount", increment: { integerValue: -1 } },
+            ],
+          },
+        },
+      ];
+
+  const res = await fetch(`${BASE}:commit`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ writes }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    console.error("commitLikeToggle failed:", res.status, body);
+    throw new Error(`LIKE_TOGGLE: ${res.status}`);
+  }
+}
+
 export async function addDoc(collectionPath: string, data: Record<string, unknown>): Promise<string> {
   const headers = await authHeaders();
   const res = await fetch(`${BASE}/${collectionPath}`, {

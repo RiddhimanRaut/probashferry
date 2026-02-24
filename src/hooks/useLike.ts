@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getDoc, setDoc, mergeDoc, deleteDoc } from "@/lib/firebase/firestore-rest";
+import { getDoc, commitLikeToggle } from "@/lib/firebase/firestore-rest";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 export function useLike(articleId: string) {
@@ -12,6 +12,7 @@ export function useLike(articleId: string) {
   const busyRef = useRef(false);
   const likedRef = useRef(false);
   const suppressPollRef = useRef(false);
+  const suppressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep likedRef in sync when state changes from external sources (polls)
   useEffect(() => {
@@ -26,7 +27,7 @@ export function useLike(articleId: string) {
       try {
         const data = await getDoc(`articles/${articleId}`);
         if (!cancelled && data && !suppressPollRef.current) {
-          setLikeCount((data.likeCount as number) || 0);
+          setLikeCount(Math.max(0, (data.likeCount as number) || 0));
           setCommentCount((data.commentCount as number) || 0);
         }
       } catch { /* ignore polling errors */ }
@@ -57,6 +58,12 @@ export function useLike(articleId: string) {
     busyRef.current = true;
     suppressPollRef.current = true;
 
+    // Clear any pending suppress-release so it doesn't fire mid-toggle
+    if (suppressTimerRef.current) {
+      clearTimeout(suppressTimerRef.current);
+      suppressTimerRef.current = null;
+    }
+
     const wasLiked = likedRef.current;
 
     // Optimistic update — sync ref immediately so next toggle reads correct state
@@ -65,21 +72,13 @@ export function useLike(articleId: string) {
     setLikeCount((prev) => wasLiked ? Math.max(0, prev - 1) : prev + 1);
 
     try {
-      // Ensure article doc exists
-      const article = await getDoc(`articles/${articleId}`);
-      if (!article) {
-        await setDoc(`articles/${articleId}`, { likeCount: 0, commentCount: 0 });
-      }
-
-      const currentCount = (article?.likeCount as number) || 0;
-
-      if (wasLiked) {
-        await deleteDoc(`likes/${articleId}/users/${user.uid}`);
-        await mergeDoc(`articles/${articleId}`, { likeCount: Math.max(0, currentCount - 1) });
-      } else {
-        await setDoc(`likes/${articleId}/users/${user.uid}`, { userId: user.uid });
-        await mergeDoc(`articles/${articleId}`, { likeCount: currentCount + 1 });
-      }
+      // Single atomic commit: like-doc write + server-side count increment
+      await commitLikeToggle(
+        `articles/${articleId}`,
+        `likes/${articleId}/users/${user.uid}`,
+        user.uid,
+        !wasLiked
+      );
       return !wasLiked;
     } catch (error) {
       // Revert on failure — sync ref back too
@@ -90,7 +89,10 @@ export function useLike(articleId: string) {
     } finally {
       busyRef.current = false;
       // Keep polls suppressed so server-side writes propagate before next read
-      setTimeout(() => { suppressPollRef.current = false; }, 3000);
+      suppressTimerRef.current = setTimeout(() => {
+        suppressPollRef.current = false;
+        suppressTimerRef.current = null;
+      }, 3000);
     }
   }, [user, articleId]);
 
