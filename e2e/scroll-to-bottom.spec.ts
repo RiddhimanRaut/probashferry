@@ -35,7 +35,7 @@ test.describe("Scroll toggle button", () => {
     // Wait for scroll to reach bottom
     await page.waitForFunction(
       () => {
-        const el = document.querySelector(".overflow-y-auto");
+        const el = document.querySelector("[data-scroll-container]");
         if (!el) return false;
         return el.scrollHeight > el.clientHeight &&
           el.scrollTop >= el.scrollHeight - el.clientHeight - 5;
@@ -55,7 +55,7 @@ test.describe("Scroll toggle button", () => {
 
     // Programmatically scroll to bottom (skip the button for setup)
     await page.evaluate(() => {
-      const el = document.querySelector(".overflow-y-auto");
+      const el = document.querySelector("[data-scroll-container]");
       if (el) el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
     });
     await page.waitForTimeout(200);
@@ -72,7 +72,7 @@ test.describe("Scroll toggle button", () => {
     // Wait for scroll to reach top
     await page.waitForFunction(
       () => {
-        const el = document.querySelector(".overflow-y-auto");
+        const el = document.querySelector("[data-scroll-container]");
         if (!el) return false;
         return el.scrollTop <= 5;
       },
