@@ -13,9 +13,9 @@ export function useLike(articleId: string) {
   const likedRef = useRef(false);
   const suppressPollRef = useRef(false);
 
-  // Keep likedRef in sync with state
+  // Keep likedRef in sync when state changes from external sources (polls)
   useEffect(() => {
-    likedRef.current = liked;
+    if (!suppressPollRef.current) likedRef.current = liked;
   }, [liked]);
 
   // Poll article stats
@@ -41,9 +41,10 @@ export function useLike(articleId: string) {
     if (!user) { setLiked(false); return; }
     let cancelled = false;
     const check = async () => {
+      if (suppressPollRef.current) return;
       try {
         const data = await getDoc(`likes/${articleId}/users/${user.uid}`);
-        if (!cancelled) setLiked(data !== null);
+        if (!cancelled && !suppressPollRef.current) setLiked(data !== null);
       } catch { /* ignore */ }
     };
     check();
@@ -58,7 +59,8 @@ export function useLike(articleId: string) {
 
     const wasLiked = likedRef.current;
 
-    // Optimistic update
+    // Optimistic update — sync ref immediately so next toggle reads correct state
+    likedRef.current = !wasLiked;
     setLiked(!wasLiked);
     setLikeCount((prev) => wasLiked ? Math.max(0, prev - 1) : prev + 1);
 
@@ -78,14 +80,15 @@ export function useLike(articleId: string) {
       }
       return !wasLiked;
     } catch (error) {
-      // Revert on failure
+      // Revert on failure — sync ref back too
+      likedRef.current = wasLiked;
       setLiked(wasLiked);
       setLikeCount((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1));
       console.error("Like error:", error);
       throw error;
     } finally {
       busyRef.current = false;
-      // Keep poll suppressed briefly so the server-side write propagates
+      // Keep polls suppressed so server-side writes propagate before next read
       setTimeout(() => { suppressPollRef.current = false; }, 3000);
     }
   }, [user, articleId]);
