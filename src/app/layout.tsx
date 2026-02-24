@@ -1,0 +1,55 @@
+import type { Metadata, Viewport } from "next";
+import { Playfair_Display, Inter, Noto_Serif_Bengali } from "next/font/google";
+import { AuthProvider } from "@/providers/AuthProvider";
+import "./globals.css";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const notoBengali = Noto_Serif_Bengali({
+  subsets: ["bengali"],
+  variable: "--font-noto-bengali",
+  display: "swap",
+  weight: ["400", "700"],
+});
+
+export const metadata: Metadata = {
+  title: "Probashferry — Stories of Bengalis Abroad",
+  description:
+    "A digital magazine celebrating the Bengali diaspora. Stories of culture, nostalgia, and identity from Bengalis around the world.",
+  keywords: ["Bengali", "diaspora", "magazine", "culture", "probashi"],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#C45A3C",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${playfair.variable} ${inter.variable} ${notoBengali.variable}`}
+    >
+      <body className="font-body bg-paper text-charcoal antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
+    </html>
+  );
+}

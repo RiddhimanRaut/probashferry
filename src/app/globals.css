@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-paper: #F5F0E8;
+  --color-charcoal: #1A1A1A;
+  --color-terracotta: #C45A3C;
+  --color-terracotta-light: #D4735A;
+  --color-terracotta-dark: #A84830;
+  --color-mustard: #D4A843;
+  --color-mustard-light: #E0BE6A;
+  --color-mustard-dark: #B8912E;
+  --color-sindoor: #A52422;
+  --color-sage: #7A8B6F;
+
+  --bg-primary: var(--color-paper);
+  --bg-secondary: #EDE8DD;
+  --text-primary: var(--color-charcoal);
+  --text-secondary: #4A4A4A;
+  --accent-primary: var(--color-terracotta);
+  --accent-secondary: var(--color-mustard);
+  --accent-heart: var(--color-sindoor);
+  --accent-tag: var(--color-sage);
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+  ::selection {
+    background-color: var(--color-mustard-light);
+    color: var(--color-charcoal);
+  }
+}
+
+@layer components {
+  .heading-display {
+    font-family: var(--font-playfair), serif;
+    @apply font-bold tracking-tight;
+  }
+  .panel {
+    @apply min-h-[100dvh] w-screen flex-shrink-0 overflow-y-auto;
+  }
+  .btn-primary {
+    @apply bg-terracotta text-white px-4 py-2 rounded-lg hover:bg-terracotta-dark transition-colors duration-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
