@@ -1,4 +1,4 @@
-const CACHE_NAME = "probashferry-v4";
+const CACHE_NAME = "probashferry-v5";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -13,15 +13,18 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Only handle GET requests
+  // Only handle same-origin GET requests for static assets
   if (event.request.method !== "GET") return;
 
-  // Let Firebase/Google API requests pass through to the network directly
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith("/__/auth/")) return;
-  if (url.hostname.includes("googleapis.com") || url.hostname.includes("firebaseio.com")) return;
 
-  // Stale-while-revalidate: serve from cache immediately, update in background
+  // Only cache same-origin requests — let all external requests (Firebase, Google APIs) pass through
+  if (url.origin !== self.location.origin) return;
+
+  // Don't cache API routes or auth handlers
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/__/")) return;
+
+  // Stale-while-revalidate for same-origin static assets only
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) =>
       cache.match(event.request).then((cached) => {
