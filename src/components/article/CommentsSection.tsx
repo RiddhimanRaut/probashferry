@@ -1,24 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle } from "lucide-react";
 import { useComments } from "@/hooks/useComments";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
-import KanthaDivider from "@/components/ui/KanthaDivider";
 
 export default function CommentsSection({ articleId }: { articleId: string }) {
   const { comments, loading, addComment } = useComments(articleId);
 
   return (
-    <div className="mt-8">
-      <KanthaDivider />
-      <div className="flex items-center gap-2 mb-4">
-        <MessageCircle size={18} className="text-charcoal/40" />
-        <h3 className="text-sm font-medium text-charcoal/60 uppercase tracking-wider">
-          Comments {comments.length > 0 && `(${comments.length})`}
-        </h3>
-      </div>
+    <div className="mt-2 mb-4">
       <CommentForm onSubmit={addComment} />
       <div className="mt-4 divide-y divide-charcoal/5">
         {loading ? (

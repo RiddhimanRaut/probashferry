@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { Article } from "@/types/article";
 import ArticleHeader from "@/components/article/ArticleHeader";
 import LikeButton from "@/components/article/LikeButton";
@@ -28,8 +29,9 @@ export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
       if (parent) (scrollRef as React.MutableRefObject<HTMLElement | null>).current = parent;
     }
   }, []);
-  const { liked, toggleLike } = useLike(article.slug);
+  const { liked, commentCount, toggleLike } = useLike(article.slug);
   const { user, promptSignIn } = useAuthContext();
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   const handleDoubleTap = useCallback(async () => {
     if (!user) { promptSignIn(); return; }
@@ -60,9 +62,22 @@ export default function ArticlePanel({ article, isActive }: ArticlePanelProps) {
 
           <div className="flex items-center gap-4 mt-8 py-4 border-t border-charcoal/5">
             <LikeButton articleId={article.slug} />
+            <button
+              onClick={() => setCommentsOpen((o) => !o)}
+              className="flex items-center gap-2 group transition-colors"
+              aria-label="Toggle comments"
+            >
+              <MessageCircle
+                size={21}
+                className={commentsOpen ? "text-terracotta" : "text-charcoal/40 group-hover:text-terracotta/60 transition-colors"}
+              />
+              <span className={`text-sm tabular-nums ${commentsOpen ? "text-terracotta font-medium" : "text-charcoal/50"}`}>
+                {commentCount > 0 ? commentCount : ""}
+              </span>
+            </button>
           </div>
 
-          <CommentsSection articleId={article.slug} />
+          {commentsOpen && <CommentsSection articleId={article.slug} />}
           <Footer />
         </div>
       </DoubleTapOverlay>

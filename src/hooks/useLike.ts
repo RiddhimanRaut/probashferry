@@ -17,12 +17,16 @@ export function useLike(articleId: string) {
   const { user } = useAuthContext();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     const db = getFirebaseDb();
     const ref = doc(db, "articles", articleId);
     return onSnapshot(ref, (snap) => {
-      if (snap.exists()) setLikeCount(snap.data().likeCount || 0);
+      if (snap.exists()) {
+        setLikeCount(snap.data().likeCount || 0);
+        setCommentCount(snap.data().commentCount || 0);
+      }
     });
   }, [articleId]);
 
@@ -57,5 +61,5 @@ export function useLike(articleId: string) {
     }
   }, [user, articleId, liked]);
 
-  return { liked, likeCount, toggleLike };
+  return { liked, likeCount, commentCount, toggleLike };
 }
