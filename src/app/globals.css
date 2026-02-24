@@ -73,8 +73,8 @@
   }
 }
 
-/* In fullscreen PWA, no safe area insets needed */
-@media (display-mode: fullscreen) {
+/* In PWA mode, no safe area insets needed */
+@media (display-mode: fullscreen), (display-mode: standalone) {
   .safe-top {
     padding-top: 0px !important;
   }
