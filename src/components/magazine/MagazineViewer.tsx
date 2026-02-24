@@ -52,6 +52,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTouchTap = useRef(0);
   const lastMouseTap = useRef(0);
+  const lastTouchDoubleTap = useRef(0); // suppress synthetic click after touch double-tap
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null; }
@@ -123,6 +124,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         if (singleTapTimer.current) { clearTimeout(singleTapTimer.current); singleTapTimer.current = null; }
 
         if (isDoubleTap) {
+          lastTouchDoubleTap.current = now;
           fireDoubleTap(touch.clientX, touch.clientY);
         } else {
           singleTapTimer.current = setTimeout(() => {
@@ -141,6 +143,9 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
+      // Skip synthetic clicks generated after touch events (prevents duplicate hearts)
+      if (Date.now() - lastTouchDoubleTap.current < 800) return;
+
       const target = e.target as HTMLElement;
       if (target.closest("button, a, input, [role='button']")) return;
 

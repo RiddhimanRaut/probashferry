@@ -33,13 +33,23 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
   const [commentsOpen, setCommentsOpen] = useState(false);
   const lastHandledTap = useRef(0);
 
-  // React to double-tap events from MagazineViewer
+  // Use refs to avoid re-firing the effect when liked/toggleLike/user change
+  const likedRef = useRef(liked);
+  likedRef.current = liked;
+  const toggleLikeRef = useRef(toggleLike);
+  toggleLikeRef.current = toggleLike;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const promptSignInRef = useRef(promptSignIn);
+  promptSignInRef.current = promptSignIn;
+
+  // React to double-tap events from MagazineViewer — only fires when doubleTapEvent changes
   useEffect(() => {
     if (!doubleTapEvent || doubleTapEvent.id === lastHandledTap.current) return;
     lastHandledTap.current = doubleTapEvent.id;
-    if (!user) { promptSignIn(); return; }
-    if (!liked) void toggleLike();
-  }, [doubleTapEvent, user, promptSignIn, liked, toggleLike]);
+    if (!userRef.current) { promptSignInRef.current(); return; }
+    if (!likedRef.current) void toggleLikeRef.current();
+  }, [doubleTapEvent]);
 
   return (
     <div className="relative bg-paper min-h-full" ref={setScrollParent}>
