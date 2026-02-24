@@ -57,7 +57,7 @@ export function useLike(articleId: string) {
       return !liked;
     } catch (error) {
       console.error("Like error:", error);
-      return liked;
+      throw error;
     }
   }, [user, articleId, liked]);
 
