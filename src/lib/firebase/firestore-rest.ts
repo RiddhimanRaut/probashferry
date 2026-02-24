@@ -118,6 +118,7 @@ export async function deleteDoc(path: string): Promise<void> {
 /**
  * Atomic like toggle — batches the like-doc write and count increment
  * into a single Firestore commit. No read needed; server-side increment.
+ * Falls back to separate writes if the commit API fails.
  */
 export async function commitLikeToggle(
   articlePath: string,
@@ -139,23 +140,27 @@ export async function commitLikeToggle(
           },
         },
         {
-          transform: {
-            document: articleName,
-            fieldTransforms: [
-              { fieldPath: "likeCount", increment: { integerValue: 1 } },
-            ],
+          update: {
+            name: articleName,
+            fields: {},
           },
+          updateMask: { fieldPaths: [] },
+          updateTransforms: [
+            { fieldPath: "likeCount", increment: { integerValue: "1" } },
+          ],
         },
       ]
     : [
         { delete: likeName },
         {
-          transform: {
-            document: articleName,
-            fieldTransforms: [
-              { fieldPath: "likeCount", increment: { integerValue: -1 } },
-            ],
+          update: {
+            name: articleName,
+            fields: {},
           },
+          updateMask: { fieldPaths: [] },
+          updateTransforms: [
+            { fieldPath: "likeCount", increment: { integerValue: "-1" } },
+          ],
         },
       ];
 
@@ -165,11 +170,47 @@ export async function commitLikeToggle(
     body: JSON.stringify({ writes }),
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    console.error("commitLikeToggle failed:", res.status, body);
-    throw new Error(`LIKE_TOGGLE: ${res.status}`);
+  if (res.ok) return;
+
+  // Atomic commit failed — fall back to separate writes
+  const body = await res.text();
+  console.warn("Batch commit failed, using fallback:", res.status, body);
+  await commitLikeToggleFallback(articlePath, likePath, userId, like, headers);
+}
+
+/** Fallback: separate writes when batch commit is unavailable */
+async function commitLikeToggleFallback(
+  articlePath: string,
+  likePath: string,
+  userId: string,
+  like: boolean,
+  headers: HeadersInit
+): Promise<void> {
+  if (like) {
+    // Create like doc
+    await fetch(`${BASE}/${likePath}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ fields: { userId: { stringValue: userId } } }),
+    });
+  } else {
+    // Delete like doc
+    await fetch(`${BASE}/${likePath}`, { method: "DELETE", headers });
   }
+
+  // Read current count, then write updated count
+  const articleRes = await fetch(`${BASE}/${articlePath}?key=${KEY}`);
+  const currentCount = articleRes.ok
+    ? (fromFields((await articleRes.json()).fields || {}).likeCount as number) || 0
+    : 0;
+
+  const newCount = like ? currentCount + 1 : Math.max(0, currentCount - 1);
+  const mask = `updateMask.fieldPaths=likeCount`;
+  await fetch(`${BASE}/${articlePath}?${mask}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ fields: { likeCount: { integerValue: String(newCount) } } }),
+  });
 }
 
 export async function addDoc(collectionPath: string, data: Record<string, unknown>): Promise<string> {
