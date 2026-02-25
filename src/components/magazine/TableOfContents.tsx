@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { List, X, Heart } from "lucide-react";
+import { List, X, Heart, Users } from "lucide-react";
 import { ArticleMeta } from "@/types/article";
 import { getDoc } from "@/lib/firebase/firestore-rest";
 
@@ -104,6 +104,23 @@ export default function TableOfContents({ articles, currentIndex, onSelect, open
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Meet The Team */}
+                <div className="border-t border-charcoal/10 mt-3 pt-3">
+                  <button
+                    onClick={() => { onSelect(articles.length + 1); onOpenChange(false); }}
+                    className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 ${
+                      currentIndex === articles.length + 1 ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
+                    }`}
+                    data-testid="toc-team-entry"
+                  >
+                    <Users size={16} className="opacity-50 shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Meet The Team</p>
+                      <span className="text-xs text-charcoal/40">The people behind the magazine</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             </motion.div>

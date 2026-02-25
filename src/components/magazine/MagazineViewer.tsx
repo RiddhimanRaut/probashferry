@@ -7,6 +7,7 @@ import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
+import TeamPanel from "./TeamPanel";
 import TableOfContents from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
@@ -41,7 +42,7 @@ const panelVariants = {
 };
 
 export default function MagazineViewer({ articles }: { articles: Article[] }) {
-  const totalPanels = articles.length + 1;
+  const totalPanels = articles.length + 2;
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
 
   const [showControls, setShowControls] = useState(false);
@@ -113,10 +114,10 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   }, []);
 
   const fireDoubleTap = useCallback((x: number, y: number) => {
-    if (currentIndexRef.current === 0) return; // no hearts on cover
+    if (currentIndexRef.current === 0 || currentIndexRef.current === totalPanels - 1) return; // no hearts on cover or team
     spawnHeart(x, y);
     setDoubleTapEvent({ x, y, id: Date.now() });
-  }, [spawnHeart]);
+  }, [spawnHeart, totalPanels]);
 
   // --- Touch handling (mobile) ---
 
@@ -203,6 +204,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   );
 
   const onCover = currentIndex === 0;
+  const onTeam = currentIndex === totalPanels - 1;
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalPanels - 1;
 
@@ -214,7 +216,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       onClick={handleClick}
     >
       <AnimatePresence>
-        {!onCover && showControls && (
+        {!onCover && !onTeam && showControls && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -245,6 +247,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         >
           {onCover ? (
             <CoverPanel />
+          ) : onTeam ? (
+            <TeamPanel />
           ) : (
             <ArticlePanel
               article={articles[currentIndex - 1]}
@@ -292,7 +296,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
 
       {/* Controls */}
       <AnimatePresence>
-        {showControls && !onCover && (
+        {showControls && !onCover && !onTeam && (
           <>
             <motion.div
               key="backdrop"
