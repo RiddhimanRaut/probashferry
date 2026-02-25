@@ -30,21 +30,22 @@ test.describe("Swipe navigation", () => {
     await expect(page.locator("h1", { hasText: "Probashferry" })).toBeVisible({ timeout: 5000 });
   });
 
-  test("cannot swipe past last article", async ({ magazinePage: page }) => {
+  test("cannot swipe past last panel (team page)", async ({ magazinePage: page }) => {
     await goToFirstArticle(page);
 
-    // Swipe left many times to reach the end
+    // Swipe left many times to reach the end (past all articles + team page)
     for (let i = 0; i < 20; i++) {
       await swipeLeft(page);
       await page.waitForTimeout(300);
     }
 
-    // One more swipe should not crash or change anything
-    const contentBefore = await page.locator(".prose").textContent();
+    // Should be on the team panel (the last panel)
+    await expect(page.locator('[data-testid="team-panel"]')).toBeVisible({ timeout: 5000 });
+
+    // One more swipe should not crash or change anything — still on team page
     await swipeLeft(page);
     await page.waitForTimeout(300);
-    const contentAfter = await page.locator(".prose").textContent();
-    expect(contentAfter).toBe(contentBefore);
+    await expect(page.locator('[data-testid="team-panel"]')).toBeVisible();
   });
 
   test("cannot swipe before cover", async ({ magazinePage: page }) => {
