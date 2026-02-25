@@ -204,6 +204,7 @@ function ScatterPolaroid({ member, index, selected, onTap }: ScatterPolaroidProp
           ["--base-rotate" as string]: `${baseRotate}deg`,
           ["--sway-duration" as string]: `${swayDuration}s`,
           animationDelay: `${index * 0.4}s`,
+          transform: `rotate(${baseRotate}deg)`,
           opacity: selected ? 0.3 : 1,
           transition: "opacity 0.2s",
         }}
