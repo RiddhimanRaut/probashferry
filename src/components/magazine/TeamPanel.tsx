@@ -24,7 +24,7 @@ const TEAM: Member[] = [
     name: "Riddhiman",
     fullName: "Riddhiman Raut",
     role: "Editor-in-Chief",
-    bio: "Riddhiman brings stories of the Bengali diaspora to life with his sharp editorial eye. A journalist by training and storyteller by instinct, he founded Probashferry to bridge the distance between home and abroad.",
+    bio: "Riddhiman brings stories of the Bengali diaspora to life with his sharp editorial eye. A journalist by training and storyteller by instinct, he steers every issue to bridge the distance between home and abroad.",
     image: null,
   },
   {
