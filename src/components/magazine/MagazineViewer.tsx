@@ -58,6 +58,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const [scrollZone, setScrollZone] = useState<"top" | "middle" | "bottom">("top");
   const [sectionSplash, setSectionSplash] = useState<{ section: string; dir: number } | null>(null);
   const prevCategoryRef = useRef<string | null>(null);
+  const hasNavigatedRef = useRef(false);
+  const skipSplashRef = useRef(false);
   const splashActiveRef = useRef(false);
   splashActiveRef.current = !!sectionSplash;
   const currentIndexRef = useRef(currentIndex);
@@ -108,18 +110,26 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     const isArticle = currentIndex >= 1 && currentIndex <= articles.length;
     const currentCategory = isArticle ? articles[currentIndex - 1].category : null;
 
-    if (currentCategory && currentCategory !== prevCategoryRef.current && !sectionSplash) {
+    if (skipSplashRef.current) {
+      skipSplashRef.current = false;
+    } else if (currentCategory && currentCategory !== prevCategoryRef.current && !sectionSplash && hasNavigatedRef.current) {
       setSectionSplash({ section: currentCategory, dir: direction });
       setTimeout(() => setSectionSplash(null), 1500);
     }
 
     prevCategoryRef.current = currentCategory;
+    hasNavigatedRef.current = true;
   }, [currentIndex, articles, sectionSplash, direction]);
 
   const handleTocOpenChange = useCallback((open: boolean) => {
     setTocOpen(open);
     if (!open) resetHideTimer();
   }, [resetHideTimer]);
+
+  const handleArticleSelect = useCallback((index: number) => {
+    skipSplashRef.current = true;
+    goTo(index);
+  }, [goTo]);
 
   const handleSectionSelect = useCallback((section: string) => {
     const idx = articles.findIndex(a => a.category === section);
@@ -436,7 +446,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         )}
       </AnimatePresence>
 
-      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
+      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
     </div>
   );
 }

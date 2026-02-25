@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import KanthaDivider from "@/components/ui/KanthaDivider";
 import Avatar from "@/components/ui/Avatar";
@@ -310,8 +310,17 @@ export default function TeamPanel() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
 
-  const selectedIndex = TEAM.findIndex((m) => m.id === selectedId);
-  const selectedMember = selectedIndex >= 0 ? TEAM[selectedIndex] : null;
+  const shuffledTeam = useMemo(() => {
+    const arr = [...TEAM];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, []);
+
+  const selectedIndex = shuffledTeam.findIndex((m) => m.id === selectedId);
+  const selectedMember = selectedIndex >= 0 ? shuffledTeam[selectedIndex] : null;
 
   function handleSelect(id: string) {
     setSelectedId(id);
@@ -340,7 +349,7 @@ export default function TeamPanel() {
       <div className="relative flex-1 min-h-0 overflow-visible z-10 -mt-6">
         <StringLights />
 
-        {TEAM.map((member, i) => (
+        {shuffledTeam.map((member, i) => (
           <ScatterPolaroid
             key={member.id}
             member={member}
