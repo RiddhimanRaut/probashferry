@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { Article } from "@/types/article";
 import ArticleHeader from "@/components/article/ArticleHeader";
 import LikeButton from "@/components/article/LikeButton";
+import ShareButton from "@/components/article/ShareButton";
 import CommentsSection from "@/components/article/CommentsSection";
 import ReadingProgress from "@/components/article/ReadingProgress";
 import Footer from "@/components/layout/Footer";
@@ -87,6 +88,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
               {commentCount > 0 ? commentCount : ""}
             </span>
           </button>
+          <ShareButton slug={article.slug} title={article.title} excerpt={article.excerpt} />
         </div>
 
         {commentsOpen && <CommentsSection articleId={article.slug} />}

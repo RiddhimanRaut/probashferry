@@ -41,9 +41,15 @@ const panelVariants = {
   }),
 };
 
-export default function MagazineViewer({ articles }: { articles: Article[] }) {
+interface MagazineViewerProps {
+  articles: Article[];
+  initialArticleSlug?: string;
+}
+
+export default function MagazineViewer({ articles, initialArticleSlug }: MagazineViewerProps) {
   const totalPanels = articles.length + 2;
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
+  const initialNavDone = useRef(false);
 
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
@@ -64,6 +70,18 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   splashActiveRef.current = !!sectionSplash;
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
+
+  // Navigate to initial article from ?article=slug query param
+  useEffect(() => {
+    if (!initialArticleSlug || initialNavDone.current) return;
+    initialNavDone.current = true;
+    const idx = articles.findIndex((a) => a.slug === initialArticleSlug);
+    if (idx !== -1) {
+      skipSplashRef.current = true;
+      goTo(idx + 1);
+    }
+    window.history.replaceState({}, "", "/");
+  }, [initialArticleSlug, articles, goTo]);
 
   const getScrollContainer = useCallback(
     () => document.querySelector<HTMLElement>("[data-scroll-container]"),

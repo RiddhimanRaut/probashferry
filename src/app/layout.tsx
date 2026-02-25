@@ -29,10 +29,27 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://probashferry.vercel.app"),
   title: "Probashferry — Stories of Bengalis Abroad",
   description:
     "A digital magazine celebrating the Bengali diaspora. Stories of culture, nostalgia, and identity from Bengalis around the world.",
   keywords: ["Bengali", "diaspora", "magazine", "culture", "probashi"],
+  openGraph: {
+    title: "Probashferry — Stories of Bengalis Abroad",
+    description:
+      "A digital magazine celebrating the Bengali diaspora. Stories of culture, nostalgia, and identity from Bengalis around the world.",
+    url: "https://probashferry.vercel.app",
+    siteName: "Probashferry",
+    images: [{ url: "/images/cover.jpg", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Probashferry — Stories of Bengalis Abroad",
+    description:
+      "A digital magazine celebrating the Bengali diaspora. Stories of culture, nostalgia, and identity from Bengalis around the world.",
+    images: ["/images/cover.jpg"],
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
