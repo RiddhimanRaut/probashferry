@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Article } from "@/types/article";
@@ -8,7 +8,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
 import TeamPanel from "./TeamPanel";
-import TableOfContents from "./TableOfContents";
+import TableOfContents, { SECTION_ICONS } from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
 const SWIPE_THRESHOLD = 60;
@@ -56,6 +56,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const lastMouseTap = useRef({ time: 0, x: 0, y: 0 });
   const lastTouchDoubleTap = useRef(0);
   const [scrollZone, setScrollZone] = useState<"top" | "middle" | "bottom">("top");
+  const [sectionSplash, setSectionSplash] = useState<{ section: string; dir: number } | null>(null);
+  const prevCategoryRef = useRef<string | null>(null);
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
 
@@ -99,10 +101,30 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     if (!showControls) setTocOpen(false);
   }, [showControls]);
 
+  // Show section splash when swiping into a new category
+  useLayoutEffect(() => {
+    const isArticle = currentIndex >= 1 && currentIndex <= articles.length;
+    const currentCategory = isArticle ? articles[currentIndex - 1].category : null;
+
+    if (currentCategory && currentCategory !== prevCategoryRef.current && !sectionSplash) {
+      setSectionSplash({ section: currentCategory, dir: direction });
+      setTimeout(() => setSectionSplash(null), 1500);
+    }
+
+    prevCategoryRef.current = currentCategory;
+  }, [currentIndex, articles, sectionSplash, direction]);
+
   const handleTocOpenChange = useCallback((open: boolean) => {
     setTocOpen(open);
     if (!open) resetHideTimer();
   }, [resetHideTimer]);
+
+  const handleSectionSelect = useCallback((section: string) => {
+    const idx = articles.findIndex(a => a.category === section);
+    if (idx !== -1) goTo(idx + 1);
+    setSectionSplash({ section, dir: 1 });
+    setTimeout(() => setSectionSplash(null), 1500);
+  }, [articles, goTo]);
 
   const spawnHeart = useCallback((x: number, y: number) => {
     const id = Date.now() + Math.random();
@@ -294,6 +316,52 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         ))}
       </AnimatePresence>
 
+      {/* Section splash overlay */}
+      <AnimatePresence>
+        {sectionSplash && (() => {
+          const SplashIcon = SECTION_ICONS[sectionSplash.section];
+          return (
+            <motion.div
+              key="section-splash"
+              initial={{ x: sectionSplash.dir > 0 ? "100%" : "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{
+                x: { type: "tween", duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
+                opacity: { duration: 0.5 },
+              }}
+              className="fixed inset-0 z-[60] bg-charcoal flex items-center justify-center pointer-events-none"
+            >
+              <div className="flex flex-col items-center gap-4">
+                {SplashIcon && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15, duration: 0.4 }}
+                  >
+                    <SplashIcon size={48} className="text-white" strokeWidth={1.5} />
+                  </motion.div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.4 }}
+                  className="w-12 h-px bg-mustard"
+                />
+                <motion.h2
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.4 }}
+                  className="font-heading text-4xl text-white"
+                >
+                  {sectionSplash.section}
+                </motion.h2>
+              </div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
       {/* Controls */}
       <AnimatePresence>
         {showControls && !onCover && !onTeam && (
@@ -364,7 +432,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
         )}
       </AnimatePresence>
 
-      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
+      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={goTo} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
     </div>
   );
 }
