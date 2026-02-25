@@ -58,6 +58,8 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const [scrollZone, setScrollZone] = useState<"top" | "middle" | "bottom">("top");
   const [sectionSplash, setSectionSplash] = useState<{ section: string; dir: number } | null>(null);
   const prevCategoryRef = useRef<string | null>(null);
+  const splashActiveRef = useRef(false);
+  splashActiveRef.current = !!sectionSplash;
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
 
@@ -151,6 +153,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       if (!touchStart.current) return;
+      if (splashActiveRef.current) { touchStart.current = null; return; }
       const touch = e.changedTouches[0];
       const dx = touch.clientX - touchStart.current.x;
       const dy = touch.clientY - touchStart.current.y;
@@ -201,6 +204,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
     (e: React.MouseEvent) => {
       // Skip synthetic clicks generated after touch events (prevents duplicate hearts)
       if (Date.now() - lastTouchDoubleTap.current < 800) return;
+      if (splashActiveRef.current) return;
 
       const target = e.target as HTMLElement;
       if (target.closest("button, a, input, [role='button']")) {
