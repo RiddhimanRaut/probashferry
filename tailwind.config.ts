@@ -20,6 +20,7 @@ const config: Config = {
         heading: ["var(--font-playfair)", "serif"],
         body: ["var(--font-inter)", "sans-serif"],
         bengali: ["var(--font-noto-bengali)", "serif"],
+        handwriting: ["var(--font-caveat)", "cursive"],
       },
       keyframes: {
         nudge: {
@@ -30,10 +31,15 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(30px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        sway: {
+          "0%, 100%": { transform: "rotate(var(--base-rotate))" },
+          "50%": { transform: "rotate(calc(var(--base-rotate) + 2deg))" },
+        },
       },
       animation: {
         nudge: "nudge 2s ease-in-out infinite",
         "fade-up": "fade-up 1s ease-out 0.2s both",
+        sway: "sway var(--sway-duration, 4s) ease-in-out infinite",
       },
       typography: {
         DEFAULT: {

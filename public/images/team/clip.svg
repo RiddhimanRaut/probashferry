@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" fill="none">
+  <!-- Clothespin / bulldog clip style -->
+  <!-- Main clip body -->
+  <rect x="4" y="0" width="16" height="14" rx="2" fill="#4A4A4A"/>
+  <!-- Metallic sheen -->
+  <rect x="4" y="0" width="16" height="14" rx="2" fill="url(#clip-grad)"/>
+  <!-- Grip ridges -->
+  <line x1="7"  y1="3" x2="7"  y2="11" stroke="#666" stroke-width="0.8"/>
+  <line x1="10" y1="3" x2="10" y2="11" stroke="#666" stroke-width="0.8"/>
+  <line x1="14" y1="3" x2="14" y2="11" stroke="#666" stroke-width="0.8"/>
+  <line x1="17" y1="3" x2="17" y2="11" stroke="#666" stroke-width="0.8"/>
+  <!-- Jaw opening -->
+  <rect x="6" y="12" width="12" height="4" rx="1" fill="#3A3A3A"/>
+  <!-- Spring circle -->
+  <circle cx="12" cy="12" r="2.5" fill="none" stroke="#777" stroke-width="1"/>
+  <!-- Lower jaw prongs -->
+  <path d="M 7,16 L 7,28 Q 7,30 9,30 L 9,16" fill="#4A4A4A"/>
+  <path d="M 15,16 L 15,28 Q 15,30 17,30 L 17,16" fill="#4A4A4A"/>
+
+  <defs>
+    <linearGradient id="clip-grad" x1="4" y1="0" x2="20" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.1)"/>
+    </linearGradient>
+  </defs>
+</svg>
