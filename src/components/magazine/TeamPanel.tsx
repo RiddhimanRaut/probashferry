@@ -328,7 +328,7 @@ export default function TeamPanel() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col py-8" data-testid="team-panel">
+    <div className="py-8" data-testid="team-panel">
       {/* Heading */}
       <div className="text-center mb-6">
         <h2 className="heading-display text-3xl text-charcoal">Meet The Team</h2>
@@ -337,7 +337,7 @@ export default function TeamPanel() {
       </div>
 
       {/* String lights + polaroids scatter area */}
-      <div className="relative flex-1 min-h-[340px] overflow-hidden">
+      <div className="relative min-h-[340px] overflow-hidden">
         <StringLights />
 
         {TEAM.map((member, i) => (
