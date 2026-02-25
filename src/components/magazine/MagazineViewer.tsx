@@ -297,7 +297,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
           }}
           data-scroll-container
           onScroll={handleScroll}
-          className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+          className={`absolute inset-0 overflow-x-hidden ${sectionSplash ? "overflow-y-hidden" : "overflow-y-auto"}`}
         >
           {onCover ? (
             <CoverPanel />
