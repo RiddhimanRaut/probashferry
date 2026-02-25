@@ -12,6 +12,7 @@ import Avatar from "@/components/ui/Avatar";
 interface Member {
   id: string;
   name: string;
+  fullName: string;
   role: string;
   bio: string;
   image: string | null;
@@ -19,87 +20,49 @@ interface Member {
 
 const TEAM: Member[] = [
   {
-    id: "ananya",
-    name: "Ananya Roy",
+    id: "riddhiman",
+    name: "Riddhiman",
+    fullName: "Riddhiman Raut",
     role: "Editor-in-Chief",
-    bio: "Ananya brings stories of the Bengali diaspora to life with her sharp editorial eye. A journalist by training and storyteller by instinct, she founded Probashferry to bridge the distance between home and abroad.",
+    bio: "Riddhiman brings stories of the Bengali diaspora to life with his sharp editorial eye. A journalist by training and storyteller by instinct, he founded Probashferry to bridge the distance between home and abroad.",
     image: null,
   },
   {
-    id: "rahim",
-    name: "Rahim Chowdhury",
+    id: "abhipsha",
+    name: "Abhipsha",
+    fullName: "Abhipsha Pandit",
     role: "Creative Director",
-    bio: "Rahim shapes the visual language of every issue. With a background in graphic design and a love for Bengali folk art, he creates layouts that feel both modern and deeply rooted in tradition.",
+    bio: "Abhipsha shapes the visual language of every issue. With a background in graphic design and a love for Bengali folk art, she creates layouts that feel both modern and deeply rooted in tradition.",
     image: null,
   },
   {
-    id: "priya",
-    name: "Priya Sen",
+    id: "ritoja",
+    name: "Ritoja",
+    fullName: "Ritoja Ray",
     role: "Managing Editor",
-    bio: "Priya keeps the wheels turning behind every publication. From coordinating contributors to fact-checking stories, her meticulous attention to detail ensures every issue meets the highest standards.",
+    bio: "Ritoja keeps the wheels turning behind every publication. From coordinating contributors to fact-checking stories, her meticulous attention to detail ensures every issue meets the highest standards.",
     image: null,
   },
   {
-    id: "kamal",
-    name: "Kamal Hasan",
+    id: "srijan",
+    name: "Srijan",
+    fullName: "Srijan Bhattacharya",
     role: "Tech Lead",
-    bio: "Kamal builds the digital experience that brings Probashferry to readers worldwide. A full-stack engineer with a passion for accessible design, he believes technology should feel invisible.",
+    bio: "Srijan builds the digital experience that brings Probashferry to readers worldwide. A full-stack engineer with a passion for accessible design, he believes technology should feel invisible.",
     image: null,
   },
   {
-    id: "diya",
-    name: "Diya Banerjee",
+    id: "pratyusha",
+    name: "Pratyusha",
+    fullName: "Pratyusha Chakraborty",
     role: "Community Manager",
-    bio: "Diya nurtures the growing Probashferry community across continents. Through events, social media, and reader outreach, she ensures every voice in the diaspora feels heard and valued.",
+    bio: "Pratyusha nurtures the growing Probashferry community across continents. Through events, social media, and reader outreach, she ensures every voice in the diaspora feels heard and valued.",
     image: null,
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Mosaic layouts per team size                                       */
-/* ------------------------------------------------------------------ */
-
-type Span = { colStart: number; colEnd: number; rowStart: number; rowEnd: number };
-
-const LAYOUTS: Record<number, Span[]> = {
-  5: [
-    { colStart: 1, colEnd: 3, rowStart: 1, rowEnd: 3 },   // A — 2×2
-    { colStart: 3, colEnd: 5, rowStart: 1, rowEnd: 2 },   // B — 2×1
-    { colStart: 1, colEnd: 2, rowStart: 3, rowEnd: 5 },   // C — 1×2
-    { colStart: 2, colEnd: 4, rowStart: 3, rowEnd: 5 },   // D — 2×2
-    { colStart: 4, colEnd: 5, rowStart: 2, rowEnd: 4 },   // E — 1×2
-  ],
-  6: [
-    { colStart: 1, colEnd: 3, rowStart: 1, rowEnd: 3 },   // A — 2×2
-    { colStart: 3, colEnd: 5, rowStart: 1, rowEnd: 2 },   // B — 2×1
-    { colStart: 3, colEnd: 4, rowStart: 2, rowEnd: 3 },   // C — 1×1
-    { colStart: 4, colEnd: 5, rowStart: 2, rowEnd: 4 },   // D — 1×2
-    { colStart: 1, colEnd: 3, rowStart: 3, rowEnd: 4 },   // E — 2×1
-    { colStart: 3, colEnd: 4, rowStart: 3, rowEnd: 4 },   // F — 1×1
-  ],
-  7: [
-    { colStart: 1, colEnd: 3, rowStart: 1, rowEnd: 3 },   // A — 2×2
-    { colStart: 3, colEnd: 4, rowStart: 1, rowEnd: 2 },   // B — 1×1
-    { colStart: 4, colEnd: 5, rowStart: 1, rowEnd: 3 },   // C — 1×2
-    { colStart: 3, colEnd: 4, rowStart: 2, rowEnd: 3 },   // D — 1×1
-    { colStart: 1, colEnd: 2, rowStart: 3, rowEnd: 4 },   // E — 1×1
-    { colStart: 2, colEnd: 4, rowStart: 3, rowEnd: 4 },   // F — 2×1
-    { colStart: 4, colEnd: 5, rowStart: 3, rowEnd: 4 },   // G — 1×1
-  ],
-  8: [
-    { colStart: 1, colEnd: 3, rowStart: 1, rowEnd: 3 },   // A — 2×2
-    { colStart: 3, colEnd: 4, rowStart: 1, rowEnd: 2 },   // B — 1×1
-    { colStart: 4, colEnd: 5, rowStart: 1, rowEnd: 3 },   // C — 1×2
-    { colStart: 3, colEnd: 4, rowStart: 2, rowEnd: 3 },   // D — 1×1
-    { colStart: 1, colEnd: 2, rowStart: 3, rowEnd: 4 },   // E — 1×1
-    { colStart: 2, colEnd: 3, rowStart: 3, rowEnd: 4 },   // F — 1×1
-    { colStart: 3, colEnd: 5, rowStart: 3, rowEnd: 4 },   // G — 2×1
-    { colStart: 1, colEnd: 3, rowStart: 4, rowEnd: 5 },   // H — 2×1
-  ],
-};
-
-/* ------------------------------------------------------------------ */
-/*  Color cycle                                                        */
+/*  Color cycle (accent for polaroid photo areas)                      */
 /* ------------------------------------------------------------------ */
 
 const ACCENT_COLORS = [
@@ -111,16 +74,260 @@ const ACCENT_COLORS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Component                                                          */
+/*  Layout: positions along the catenary string                        */
+/* ------------------------------------------------------------------ */
+
+const POSITIONS = [12, 32, 52, 72, 92];
+
+/**
+ * SVG Bézier curve: M 0,30 Q 50,80 100,30
+ * viewBox 0 0 100 90 at h-[90px] → y maps 1:1 to px.
+ */
+function stringY(pct: number): number {
+  const t = Math.max(0, Math.min(1, pct / 100));
+  return 30 * (1 - t) * (1 - t) + 80 * 2 * t * (1 - t) + 30 * t * t;
+}
+
+const ROTATIONS = [-6, 4, -3, 7, -5];
+const SWAY_DURATIONS = [3.2, 3.8, 4.4, 3.6, 4.0];
+
+/* ------------------------------------------------------------------ */
+/*  String lights SVG                                                  */
+/* ------------------------------------------------------------------ */
+
+function StringLights() {
+  const d = "M 0,30 Q 50,80 100,30";
+  const bulbs = [6, 16, 26, 36, 46, 56, 66, 76, 86, 96];
+
+  return (
+    <svg
+      viewBox="0 0 100 90"
+      preserveAspectRatio="none"
+      className="absolute top-0 left-0 w-full h-[90px] pointer-events-none"
+      aria-hidden="true"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke="#1A1A1A"
+        strokeWidth="0.3"
+        strokeLinecap="round"
+      />
+      {bulbs.map((x) => {
+        const t = x / 100;
+        const y = 30 * (1 - t) * (1 - t) + 80 * 2 * t * (1 - t) + 30 * t * t;
+        return (
+          <circle key={x} cx={x} cy={y} r="1" fill="#D4A843" opacity="0.9">
+            <animate
+              attributeName="opacity"
+              values="0.9;0.5;0.9"
+              dur={`${2 + (x % 3)}s`}
+              repeatCount="indefinite"
+            />
+          </circle>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Polaroid front face (reused in scatter and popup)                  */
+/* ------------------------------------------------------------------ */
+
+function PolaroidFront({
+  member,
+  index,
+  className,
+  testId,
+  showFullName,
+}: {
+  member: Member;
+  index: number;
+  className?: string;
+  testId?: string;
+  showFullName?: boolean;
+}) {
+  const color = ACCENT_COLORS[index % ACCENT_COLORS.length];
+  return (
+    <div
+      className={`bg-white rounded-sm shadow-lg p-1.5 pb-2 ${className ?? ""}`}
+      data-testid={testId}
+    >
+      <div
+        className={`${color.bg} ${color.text} aspect-[4/5] rounded-[2px] flex items-center justify-center`}
+      >
+        <Avatar name={member.fullName} src={member.image} size={56} />
+      </div>
+      <div className="text-center mt-1.5">
+        <p className="font-handwriting text-lg leading-tight text-charcoal">
+          {showFullName ? member.fullName : member.name}
+        </p>
+        <p className="text-[8px] uppercase tracking-widest text-charcoal/50 font-body">
+          {member.role}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Scatter polaroid (on the string)                                   */
+/* ------------------------------------------------------------------ */
+
+interface ScatterPolaroidProps {
+  member: Member;
+  index: number;
+  selected: boolean;
+  onTap: () => void;
+}
+
+function ScatterPolaroid({ member, index, selected, onTap }: ScatterPolaroidProps) {
+  const left = POSITIONS[index];
+  const top = stringY(Math.max(0, left)) - 8;
+  const baseRotate = ROTATIONS[index];
+  const swayDuration = SWAY_DURATIONS[index];
+
+  return (
+    <div
+      className="absolute -translate-x-1/2"
+      style={{
+        left: `${left}%`,
+        top: `${top}px`,
+        zIndex: 10,
+        perspective: "800px",
+      }}
+    >
+      <div
+        className="animate-sway"
+        style={{
+          ["--base-rotate" as string]: `${baseRotate}deg`,
+          ["--sway-duration" as string]: `${swayDuration}s`,
+          animationDelay: `${index * 0.4}s`,
+          opacity: selected ? 0.3 : 1,
+          transition: "opacity 0.2s",
+        }}
+      >
+        {/* Clip */}
+        <div className="w-3 h-4 bg-charcoal/80 rounded-[1px] mx-auto -mb-1 relative z-10" />
+
+        <motion.div
+          className="w-[min(36vw,144px)] cursor-pointer"
+          whileTap={{ scale: 0.95 }}
+          onTap={onTap}
+        >
+          <PolaroidFront
+            member={member}
+            index={index}
+            testId={`team-tile-${member.id}`}
+          />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Popup polaroid (centered, flippable)                               */
+/* ------------------------------------------------------------------ */
+
+interface PopupPolaroidProps {
+  member: Member;
+  index: number;
+  flipped: boolean;
+  onTap: () => void;
+  onClose: () => void;
+}
+
+function PopupPolaroid({ member, index, flipped, onTap, onClose }: PopupPolaroidProps) {
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        key="team-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[60] bg-charcoal/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Centered polaroid */}
+      <motion.div
+        key="team-popup"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ type: "spring", damping: 22, stiffness: 260 }}
+        className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
+        style={{ perspective: "800px" }}
+      >
+        <motion.div
+          className="w-56 cursor-pointer pointer-events-auto"
+          style={{ transformStyle: "preserve-3d" }}
+          animate={{ rotateY: flipped ? 180 : 0 }}
+          transition={{ type: "spring", damping: 20, stiffness: 200 }}
+          onTap={onTap}
+        >
+          {/* Front face */}
+          <div style={{ backfaceVisibility: "hidden" }}>
+            <PolaroidFront member={member} index={index} showFullName />
+          </div>
+
+          {/* Back face (bio) */}
+          <div
+            className="bg-paper rounded-sm shadow-lg p-5 absolute inset-0 flex flex-col items-center justify-center text-center"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+            data-testid="team-card"
+          >
+            <h3 className="font-handwriting text-xl text-charcoal leading-tight">
+              {member.fullName}
+            </h3>
+            <p className="text-[10px] uppercase tracking-widest text-charcoal/50 font-body mt-1">
+              {member.role}
+            </p>
+            <KanthaDivider className="max-w-[100px]" />
+            <p className="text-xs text-charcoal/70 leading-relaxed font-body">
+              {member.bio}
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
 export default function TeamPanel() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const layout = LAYOUTS[TEAM.length] ?? LAYOUTS[5];
-  const selectedMember = TEAM.find((m) => m.id === selectedId) ?? null;
+  const [flipped, setFlipped] = useState(false);
+
+  const selectedIndex = TEAM.findIndex((m) => m.id === selectedId);
+  const selectedMember = selectedIndex >= 0 ? TEAM[selectedIndex] : null;
+
+  function handleSelect(id: string) {
+    setSelectedId(id);
+    setFlipped(false);
+  }
+
+  function handlePopupTap() {
+    setFlipped((f) => !f);
+  }
+
+  function handleClose() {
+    setSelectedId(null);
+    setFlipped(false);
+  }
 
   return (
-    <div className="min-h-screen flex flex-col px-4 py-8" data-testid="team-panel">
+    <div className="min-h-screen flex flex-col py-8" data-testid="team-panel">
       {/* Heading */}
       <div className="text-center mb-6">
         <h2 className="heading-display text-3xl text-charcoal">Meet The Team</h2>
@@ -128,85 +335,31 @@ export default function TeamPanel() {
         <KanthaDivider className="max-w-[200px] mx-auto" />
       </div>
 
-      {/* Mosaic grid */}
-      <div
-        className="grid grid-cols-4 gap-1.5 flex-1"
-        style={{ gridAutoRows: "minmax(0, 1fr)" }}
-        data-testid="team-mosaic"
-      >
-        {TEAM.map((member, i) => {
-          const span = layout[i];
-          const color = ACCENT_COLORS[i % ACCENT_COLORS.length];
-          const isSelected = member.id === selectedId;
-          return (
-            <button
-              key={member.id}
-              onClick={() => setSelectedId(member.id)}
-              className={`${color.bg} ${color.text} rounded-xl relative overflow-hidden cursor-pointer transition-opacity ${isSelected ? "opacity-0" : "opacity-100"}`}
-              style={{
-                gridColumn: `${span.colStart} / ${span.colEnd}`,
-                gridRow: `${span.rowStart} / ${span.rowEnd}`,
-              }}
-              data-testid={`team-tile-${member.id}`}
-            >
-              {/* Gradient overlay for depth */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-black/10 pointer-events-none" />
-              <div className="relative z-10 flex flex-col items-start justify-end h-full p-3">
-                <span className="font-heading text-lg leading-tight">{member.name}</span>
-                <span className="text-[10px] uppercase tracking-widest opacity-70 mt-0.5">
-                  {member.role}
-                </span>
-              </div>
-            </button>
-          );
-        })}
+      {/* String lights + polaroids scatter area */}
+      <div className="relative flex-1 min-h-[340px] overflow-hidden">
+        <StringLights />
+
+        {TEAM.map((member, i) => (
+          <ScatterPolaroid
+            key={member.id}
+            member={member}
+            index={i}
+            selected={member.id === selectedId}
+            onTap={() => handleSelect(member.id)}
+          />
+        ))}
       </div>
 
-      {/* Expanded card overlay */}
+      {/* Popup overlay */}
       <AnimatePresence>
         {selectedMember && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="team-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-charcoal/60 backdrop-blur-sm"
-              onClick={() => setSelectedId(null)}
-              data-testid="team-backdrop"
-            />
-
-            {/* Card */}
-            <motion.div
-              key="team-card"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
-            >
-              <div
-                className="bg-paper rounded-2xl w-[85vw] max-w-sm p-6 pointer-events-auto shadow-xl"
-                data-testid="team-card"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <Avatar name={selectedMember.name} src={selectedMember.image} size={80} />
-                  <h3 className="heading-display text-xl text-charcoal mt-4">
-                    {selectedMember.name}
-                  </h3>
-                  <p className="text-xs uppercase tracking-widest text-charcoal/50 mt-1">
-                    {selectedMember.role}
-                  </p>
-                  <KanthaDivider className="max-w-[120px]" />
-                  <p className="text-sm text-charcoal/70 leading-relaxed">
-                    {selectedMember.bio}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </>
+          <PopupPolaroid
+            member={selectedMember}
+            index={selectedIndex}
+            flipped={flipped}
+            onTap={handlePopupTap}
+            onClose={handleClose}
+          />
         )}
       </AnimatePresence>
     </div>

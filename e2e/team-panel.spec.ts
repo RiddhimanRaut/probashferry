@@ -32,48 +32,47 @@ test.describe("Team Panel", () => {
     await expect(page.locator("text=Meet The Team")).toBeVisible();
   });
 
-  test("mosaic tiles visible with 5 members", async ({ magazinePage: page }) => {
+  test("polaroid tiles visible with 5 members", async ({ magazinePage: page }) => {
     await goToTeamPanel(page);
 
-    // Check for the mosaic grid
-    await expect(page.locator('[data-testid="team-mosaic"]')).toBeVisible();
-
-    // Check for each team member tile by name
-    await expect(page.locator('[data-testid="team-tile-ananya"]')).toBeVisible();
-    await expect(page.locator('[data-testid="team-tile-rahim"]')).toBeVisible();
-    await expect(page.locator('[data-testid="team-tile-priya"]')).toBeVisible();
-    await expect(page.locator('[data-testid="team-tile-kamal"]')).toBeVisible();
-    await expect(page.locator('[data-testid="team-tile-diya"]')).toBeVisible();
+    // Check for each team member polaroid tile by name
+    await expect(page.locator('[data-testid="team-tile-riddhiman"]')).toBeVisible();
+    await expect(page.locator('[data-testid="team-tile-abhipsha"]')).toBeVisible();
+    await expect(page.locator('[data-testid="team-tile-ritoja"]')).toBeVisible();
+    await expect(page.locator('[data-testid="team-tile-srijan"]')).toBeVisible();
+    await expect(page.locator('[data-testid="team-tile-pratyusha"]')).toBeVisible();
   });
 
-  test("tapping a tile opens expanded card", async ({ magazinePage: page }) => {
+  test("tapping polaroid flips to bio", async ({ magazinePage: page }) => {
     await goToTeamPanel(page);
 
-    // Tap the first tile
-    await page.locator('[data-testid="team-tile-ananya"]').click();
+    // Tap the first polaroid
+    await page.locator('[data-testid="team-tile-riddhiman"]').click();
     await page.waitForTimeout(500);
 
-    // Expanded card should be visible
-    await expect(page.locator('[data-testid="team-card"]')).toBeVisible({ timeout: 3000 });
-    // Should show the member's name and role
-    await expect(page.locator('[data-testid="team-card"]').locator("text=Ananya Roy")).toBeVisible();
-    await expect(page.locator('[data-testid="team-card"]').locator("text=Editor-in-Chief")).toBeVisible();
+    // Back face (bio card) should be visible
+    const cards = page.locator('[data-testid="team-card"]');
+    const riddhimanCard = cards.filter({ hasText: "Riddhiman" });
+    await expect(riddhimanCard).toBeVisible({ timeout: 3000 });
+    await expect(riddhimanCard.locator("text=Editor-in-Chief")).toBeVisible();
   });
 
-  test("tapping backdrop closes expanded card", async ({ magazinePage: page }) => {
+  test("tapping flipped card flips back", async ({ magazinePage: page }) => {
     await goToTeamPanel(page);
 
-    // Open a card
-    await page.locator('[data-testid="team-tile-rahim"]').click();
-    await page.waitForTimeout(500);
-    await expect(page.locator('[data-testid="team-card"]')).toBeVisible({ timeout: 3000 });
-
-    // Tap the backdrop to close — click near the top edge where the card isn't covering
-    await page.locator('[data-testid="team-backdrop"]').click({ force: true, position: { x: 20, y: 20 } });
+    // Flip a card open
+    await page.locator('[data-testid="team-tile-abhipsha"]').click();
     await page.waitForTimeout(500);
 
-    // Card should be gone
-    await expect(page.locator('[data-testid="team-card"]')).not.toBeVisible();
+    const abhipshaCard = page.locator('[data-testid="team-card"]').filter({ hasText: "Abhipsha" });
+    await expect(abhipshaCard).toBeVisible({ timeout: 3000 });
+
+    // Tap the same polaroid area again to flip back
+    await abhipshaCard.click();
+    await page.waitForTimeout(500);
+
+    // Bio card should no longer be visible (face-down)
+    await expect(abhipshaCard).not.toBeVisible();
   });
 
   test("TOC shows Meet The Team entry and navigates to it", async ({ magazinePage: page }) => {

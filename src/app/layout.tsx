@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter, Noto_Serif_Bengali } from "next/font/google";
+import { Playfair_Display, Inter, Noto_Serif_Bengali, Caveat } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
 import "./globals.css";
 
@@ -20,6 +20,12 @@ const notoBengali = Noto_Serif_Bengali({
   variable: "--font-noto-bengali",
   display: "swap",
   weight: ["400", "700"],
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-caveat",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -55,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${inter.variable} ${notoBengali.variable}`}
+      className={`${playfair.variable} ${inter.variable} ${notoBengali.variable} ${caveat.variable}`}
     >
       <body className="font-body bg-paper text-charcoal antialiased">
         <AuthProvider>{children}</AuthProvider>
