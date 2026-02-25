@@ -224,7 +224,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
             transition={{ duration: 0.2 }}
             className="relative z-50"
           >
-            <Header />
+            <Header onTitleClick={() => goTo(0)} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -3,13 +3,15 @@
 import { useAuthContext } from "@/providers/AuthProvider";
 import { LogIn, LogOut, User } from "lucide-react";
 
-export default function Header() {
+export default function Header({ onTitleClick }: { onTitleClick?: () => void }) {
   const { user, loading, signIn, signOut } = useAuthContext();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 safe-top">
       <div className="flex items-center justify-between px-4 py-3 bg-paper/80 backdrop-blur-md">
-        <h1 className="heading-display text-lg text-terracotta">Probashferry</h1>
+        <button onClick={onTitleClick} className="heading-display text-lg text-terracotta hover:text-terracotta-dark transition-colors">
+          Probashferry
+        </button>
         <div className="flex items-center gap-3">
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-paper animate-pulse" />
