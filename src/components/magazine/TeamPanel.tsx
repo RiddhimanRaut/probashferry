@@ -371,10 +371,10 @@ export default function TeamPanel() {
           We&apos;d love to hear from you.
         </p>
         <a
-          href="mailto:hello@probashferry.com"
+          href="mailto:probashferrymagazine@gmail.com"
           className="inline-block font-handwriting text-lg text-terracotta hover:text-sindoor transition-colors mt-3"
         >
-          hello@probashferry.com
+          probashferrymagazine@gmail.com
         </a>
         <p className="font-body text-[10px] text-charcoal/30 mt-4">
           &copy; 2026 Probashferry. All rights reserved.

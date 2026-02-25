@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Share2, Check } from "lucide-react";
 import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
@@ -53,6 +53,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
 
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [doubleTapEvent, setDoubleTapEvent] = useState<{ x: number; y: number; id: number } | null>(null);
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -155,6 +156,20 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
     setSectionSplash({ section, dir: 1 });
     setTimeout(() => setSectionSplash(null), 1500);
   }, [articles, goTo]);
+
+  const handleMagazineShare = useCallback(async () => {
+    const url = "https://probashferry.vercel.app";
+    const title = "Probashferry — Stories of Bengalis Abroad";
+    const text = "A digital magazine celebrating the Bengali diaspora.";
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return; } catch { /* cancelled */ }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  }, []);
 
   const spawnHeart = useCallback((x: number, y: number) => {
     const id = Date.now() + Math.random();
@@ -463,6 +478,18 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
           </>
         )}
       </AnimatePresence>
+
+      {/* Magazine share button — mirrors TOC on the left, cover only */}
+      <motion.button
+        onClick={handleMagazineShare}
+        animate={{ opacity: onCover && showControls ? 1 : 0, scale: onCover && showControls ? 1 : 0.8 }}
+        transition={{ duration: 0.3 }}
+        className="fixed bottom-6 left-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center safe-bottom"
+        aria-label="Share magazine"
+        style={{ pointerEvents: onCover && showControls ? "auto" : "none" }}
+      >
+        {shareCopied ? <Check size={18} /> : <Share2 size={18} />}
+      </motion.button>
 
       <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
     </div>
