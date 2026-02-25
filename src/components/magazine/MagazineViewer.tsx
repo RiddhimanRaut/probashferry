@@ -54,6 +54,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [hoverEdge, setHoverEdge] = useState<"left" | "right" | null>(null);
   const [doubleTapEvent, setDoubleTapEvent] = useState<{ x: number; y: number; id: number } | null>(null);
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,6 +124,26 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
   useEffect(() => {
     if (!showControls) setTocOpen(false);
   }, [showControls]);
+
+  // Keyboard navigation (arrow keys)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (splashActiveRef.current) return;
+      if (e.key === "ArrowRight") goNext();
+      else if (e.key === "ArrowLeft") goPrev();
+      else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const el = getScrollContainer();
+        if (el) el.scrollBy({ top: 200, behavior: "smooth" });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const el = getScrollContainer();
+        if (el) el.scrollBy({ top: -200, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goNext, goPrev, getScrollContainer]);
 
   // Show section splash when swiping into a new category
   useLayoutEffect(() => {
@@ -327,6 +348,42 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Desktop hover edge zones — show arrow on hover, click to navigate */}
+      {canGoPrev && (
+        <div
+          className="fixed left-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
+          onMouseEnter={() => setHoverEdge("left")}
+          onMouseLeave={() => setHoverEdge(null)}
+          onClick={(e) => { e.stopPropagation(); goPrev(); }}
+        >
+          <motion.div
+            initial={false}
+            animate={{ opacity: hoverEdge === "left" ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center"
+          >
+            <ChevronLeft size={20} />
+          </motion.div>
+        </div>
+      )}
+      {canGoNext && (
+        <div
+          className="fixed right-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
+          onMouseEnter={() => setHoverEdge("right")}
+          onMouseLeave={() => setHoverEdge(null)}
+          onClick={(e) => { e.stopPropagation(); goNext(); }}
+        >
+          <motion.div
+            initial={false}
+            animate={{ opacity: hoverEdge === "right" ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center"
+          >
+            <ChevronRight size={20} />
+          </motion.div>
+        </div>
+      )}
 
       {/* Heart burst animation — fixed position, above everything */}
       <AnimatePresence>
