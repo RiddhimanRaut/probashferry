@@ -328,16 +328,16 @@ export default function TeamPanel() {
   }
 
   return (
-    <div className="py-8" data-testid="team-panel">
+    <div className="h-full flex flex-col pt-4 pb-4" data-testid="team-panel">
       {/* Heading */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-2 pt-10">
         <h2 className="heading-display text-3xl text-charcoal">Meet The Team</h2>
         <p className="font-bengali text-charcoal/30 text-sm mt-1">আমাদের দল</p>
         <KanthaDivider className="max-w-[200px] mx-auto" />
       </div>
 
       {/* String lights + polaroids scatter area */}
-      <div className="relative min-h-[340px] overflow-hidden">
+      <div className="relative flex-1 min-h-0 overflow-visible z-10 -mt-6">
         <StringLights />
 
         {TEAM.map((member, i) => (
@@ -352,7 +352,7 @@ export default function TeamPanel() {
       </div>
 
       {/* Get in Touch footer */}
-      <footer className="text-center px-6 pt-8 pb-10">
+      <footer className="text-center px-6 pt-4 pb-2">
         <KanthaDivider className="max-w-[200px] mx-auto" />
         <h3 className="heading-display text-2xl text-charcoal mt-2">
           Get in Touch

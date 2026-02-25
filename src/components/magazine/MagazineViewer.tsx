@@ -216,7 +216,7 @@ export default function MagazineViewer({ articles }: { articles: Article[] }) {
       onClick={handleClick}
     >
       <AnimatePresence>
-        {!onCover && !onTeam && showControls && (
+        {!onCover && showControls && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
