@@ -37,6 +37,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const lastHandledTap = useRef(0);
+  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const likedRef = useRef(liked);
   likedRef.current = liked;
@@ -50,6 +51,11 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
   useEffect(() => {
     if (!doubleTapEvent || doubleTapEvent.id === lastHandledTap.current) return;
     lastHandledTap.current = doubleTapEvent.id;
+    // Cancel pending single-tap (open viewer) since this is a double-tap (like)
+    if (singleTapTimer.current) {
+      clearTimeout(singleTapTimer.current);
+      singleTapTimer.current = null;
+    }
     if (!userRef.current) { promptSignInRef.current(); return; }
     if (!likedRef.current) void toggleLikeRef.current();
   }, [doubleTapEvent]);
@@ -61,7 +67,13 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
 
   return (
     <div ref={cardRef} className="mb-2">
-      <div className="relative group cursor-pointer" onClick={() => setViewerOpen(true)}>
+      <div className="relative group cursor-pointer" onClick={() => {
+        // Delay opening full-screen to allow double-tap (like) to cancel it
+        singleTapTimer.current = setTimeout(() => {
+          singleTapTimer.current = null;
+          setViewerOpen(true);
+        }, 400);
+      }}>
         <img
           src={photo.src}
           alt={fullCaption}
