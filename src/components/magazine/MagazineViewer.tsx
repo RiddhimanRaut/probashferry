@@ -314,6 +314,9 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalPanels - 1;
   const controlsVisible = showControls || desktopHover;
+  const controlsVisibleRef = useRef(controlsVisible);
+  controlsVisibleRef.current = controlsVisible;
+  const getControlsVisible = useCallback(() => controlsVisibleRef.current, []);
 
   return (
     <div
@@ -362,6 +365,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               isActive={true}
               doubleTapEvent={doubleTapEvent}
               initialPhotoIndex={initialPhotoIndex}
+              getControlsVisible={getControlsVisible}
             />
           ) : (
             <ArticlePanel

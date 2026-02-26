@@ -28,9 +28,10 @@ interface PhotoCardProps {
   articleAuthor: string;
   doubleTapEvent: { x: number; y: number; id: number } | null;
   cardRef: (el: HTMLDivElement | null) => void;
+  getControlsVisible?: () => boolean;
 }
 
-function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, doubleTapEvent, cardRef }: PhotoCardProps) {
+function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, doubleTapEvent, cardRef, getControlsVisible }: PhotoCardProps) {
   const photoId = `${articleSlug}-photo-${index}`;
   const { liked, likeCount, commentCount, toggleLike } = useLike(photoId);
   const { user, promptSignIn } = useAuthContext();
@@ -68,6 +69,8 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
   return (
     <div ref={cardRef} className="mb-2">
       <div className="relative group cursor-pointer" onClick={() => {
+        // If controls are showing, this tap is to dismiss them — don't open viewer
+        if (getControlsVisible?.()) return;
         // If a timer is already pending, this is the second tap — it's a double-tap
         if (singleTapTimer.current) {
           clearTimeout(singleTapTimer.current);
@@ -103,9 +106,9 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
         )}
       </AnimatePresence>
 
-      <div className="px-5 md:px-8 mt-3">
+      <div className="px-5 md:px-8 lg:px-16 mt-3">
         {(photo.title || photo.caption) && (
-          <p className="text-sm text-white/50 font-body leading-relaxed max-w-2xl mb-3">
+          <p className="text-sm text-white/50 font-body leading-relaxed mb-3">
             {photo.title && <><span className="text-white/70 font-medium">{photo.title}</span>{artist && <>, <em className="text-white/60">{artist}</em></>}. </>}
             {photo.caption}
           </p>
@@ -148,9 +151,10 @@ interface PhotoGalleryPanelProps {
   isActive: boolean;
   doubleTapEvent: { x: number; y: number; id: number } | null;
   initialPhotoIndex?: number;
+  getControlsVisible?: () => boolean;
 }
 
-export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex }: PhotoGalleryPanelProps) {
+export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex, getControlsVisible }: PhotoGalleryPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
   const initialScrollDone = useRef(false);
@@ -246,6 +250,7 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, i
             articleTitle={article.title}
             articleAuthor={article.author}
             doubleTapEvent={perCardTap[index]}
+            getControlsVisible={getControlsVisible}
             cardRef={(el) => { cardRefs.current[index] = el; }}
           />
         ))}
@@ -253,7 +258,7 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, i
 
       {/* Optional prose from MDX body */}
       {article.html && article.html.trim() && (
-        <div className="bg-charcoal px-5 md:px-8 lg:px-16 max-w-3xl mx-auto pb-4">
+        <div className="bg-charcoal px-5 md:px-8 lg:px-16 max-w-3xl lg:max-w-4xl mx-auto pb-4">
           <div
             className="prose prose-lg prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: article.html }}
@@ -261,7 +266,7 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, i
         </div>
       )}
 
-      <div className="px-5 md:px-8 max-w-3xl mx-auto pb-4">
+      <div className="px-5 md:px-8 max-w-3xl lg:max-w-4xl mx-auto pb-4">
         <Footer />
       </div>
     </div>
