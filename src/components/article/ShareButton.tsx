@@ -8,12 +8,15 @@ interface ShareButtonProps {
   title: string;
   excerpt: string;
   variant?: "light" | "dark";
+  photoIndex?: number;
 }
 
-export default function ShareButton({ slug, title, excerpt, variant = "light" }: ShareButtonProps) {
+export default function ShareButton({ slug, title, excerpt, variant = "light", photoIndex }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const url = `https://probashferry.vercel.app/read/${slug}`;
+  const url = photoIndex != null
+    ? `https://probashferry.vercel.app/read/${slug}?photo=${photoIndex}`
+    : `https://probashferry.vercel.app/read/${slug}`;
 
   const handleShare = useCallback(async () => {
     if (navigator.share) {

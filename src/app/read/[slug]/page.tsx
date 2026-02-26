@@ -5,6 +5,7 @@ import ArticleRedirect from "./ArticleRedirect";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ photo?: string }>;
 }
 
 export async function generateStaticParams() {
@@ -12,8 +13,9 @@ export async function generateStaticParams() {
   return articles.map((a) => ({ slug: a.slug }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const { photo } = await searchParams;
 
   let article;
   try {
@@ -22,21 +24,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
+  const photoIndex = photo != null ? parseInt(photo, 10) : NaN;
+  const photoData = !isNaN(photoIndex) && article.photos?.[photoIndex];
+
+  const title = photoData
+    ? `${photoData.title || article.title} — Probashferry`
+    : `${article.title} — Probashferry`;
+  const description = photoData
+    ? photoData.caption || article.excerpt
+    : article.excerpt;
+  const image = photoData
+    ? photoData.src
+    : article.coverImage;
+  const url = photoData
+    ? `/read/${slug}?photo=${photoIndex}`
+    : `/read/${slug}`;
+
   return {
-    title: `${article.title} — Probashferry`,
-    description: article.excerpt,
+    title,
+    description,
     openGraph: {
-      title: article.title,
-      description: article.excerpt,
-      url: `/read/${slug}`,
-      images: [{ url: article.coverImage, width: 1200, height: 630 }],
+      title,
+      description,
+      url,
+      images: [{ url: image, width: 1200, height: 630 }],
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: article.title,
-      description: article.excerpt,
-      images: [article.coverImage],
+      title,
+      description,
+      images: [image],
     },
   };
 }

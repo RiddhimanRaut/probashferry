@@ -45,9 +45,10 @@ const panelVariants = {
 interface MagazineViewerProps {
   articles: Article[];
   initialArticleSlug?: string;
+  initialPhotoIndex?: number;
 }
 
-export default function MagazineViewer({ articles, initialArticleSlug }: MagazineViewerProps) {
+export default function MagazineViewer({ articles, initialArticleSlug, initialPhotoIndex }: MagazineViewerProps) {
   const totalPanels = articles.length + 2;
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
   const initialNavDone = useRef(false);
@@ -360,6 +361,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
               article={articles[currentIndex - 1]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
+              initialPhotoIndex={initialPhotoIndex}
             />
           ) : (
             <ArticlePanel

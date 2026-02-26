@@ -108,7 +108,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
               {commentCount > 0 ? commentCount : ""}
             </span>
           </button>
-          <ShareButton slug={articleSlug} title={`${photo.title || articleTitle}, by ${artist}`} excerpt={photo.caption} variant="dark" />
+          <ShareButton slug={articleSlug} title={`${photo.title || articleTitle}, by ${artist}`} excerpt={photo.caption} variant="dark" photoIndex={index} />
         </div>
 
         {commentsOpen && (
@@ -129,11 +129,13 @@ interface PhotoGalleryPanelProps {
   article: Article;
   isActive: boolean;
   doubleTapEvent: { x: number; y: number; id: number } | null;
+  initialPhotoIndex?: number;
 }
 
-export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent }: PhotoGalleryPanelProps) {
+export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex }: PhotoGalleryPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
+  const initialScrollDone = useRef(false);
 
   const setScrollParent = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -168,6 +170,21 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent }:
       }
     }
   }, [doubleTapEvent]);
+
+  // Scroll to specific photo when arriving via shared link
+  useEffect(() => {
+    if (initialPhotoIndex == null || initialScrollDone.current) return;
+    initialScrollDone.current = true;
+    // Delay to let the DOM render and scroll container attach
+    const timer = setTimeout(() => {
+      const el = cardRefs.current[initialPhotoIndex];
+      const scrollEl = scrollRef.current;
+      if (el && scrollEl) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [initialPhotoIndex]);
 
   return (
     <div className="relative bg-charcoal min-h-full" ref={setScrollParent}>
