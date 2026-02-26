@@ -7,13 +7,15 @@ import { X, RotateCcw } from "lucide-react";
 interface PhotoViewerProps {
   src: string;
   caption: string;
+  title?: string;
+  author?: string;
   onClose: () => void;
 }
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 
-export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps) {
+export default function PhotoViewer({ src, caption, title, author, onClose }: PhotoViewerProps) {
   const [landscape, setLandscape] = useState(false);
   const [showCaption, setShowCaption] = useState(false);
 
@@ -341,7 +343,10 @@ export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps)
                 className="fixed bottom-0 left-0 right-0 z-[71] p-5 bg-gradient-to-t from-black/70 to-transparent"
                 onClick={(e) => e.stopPropagation()}
               >
-                <p className="text-white/80 text-sm max-w-2xl leading-relaxed">{caption}</p>
+                <p className="text-white/80 text-sm max-w-2xl leading-relaxed">
+                  {title && <><span className="font-medium">{title}</span>{author && <>, <em className="text-white/60">{author}</em></>}. </>}
+                  {caption}
+                </p>
               </motion.div>
             )}
           </>

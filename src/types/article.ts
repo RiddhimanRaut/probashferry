@@ -1,6 +1,8 @@
 export interface Photo {
   src: string;
   caption: string;
+  title?: string;
+  artist?: string;
 }
 
 export interface ArticleMeta {

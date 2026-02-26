@@ -372,7 +372,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
       </AnimatePresence>
 
       {/* Desktop hover edge zones — show arrow on hover, click to navigate */}
-      {canGoPrev && (
+      {canGoPrev && !sectionSplash && (
         <div
           className="fixed left-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
           onMouseEnter={() => setHoverEdge("left")}
@@ -389,7 +389,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
           </motion.div>
         </div>
       )}
-      {canGoNext && (
+      {canGoNext && !sectionSplash && (
         <div
           className="fixed right-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
           onMouseEnter={() => setHoverEdge("right")}

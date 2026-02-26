@@ -25,11 +25,12 @@ interface PhotoCardProps {
   index: number;
   articleSlug: string;
   articleTitle: string;
+  articleAuthor: string;
   doubleTapEvent: { x: number; y: number; id: number } | null;
   cardRef: (el: HTMLDivElement | null) => void;
 }
 
-function PhotoCard({ photo, index, articleSlug, articleTitle, doubleTapEvent, cardRef }: PhotoCardProps) {
+function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, doubleTapEvent, cardRef }: PhotoCardProps) {
   const photoId = `${articleSlug}-photo-${index}`;
   const { liked, likeCount, commentCount, toggleLike } = useLike(photoId);
   const { user, promptSignIn } = useAuthContext();
@@ -53,12 +54,17 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, doubleTapEvent, ca
     if (!likedRef.current) void toggleLikeRef.current();
   }, [doubleTapEvent]);
 
+  const artist = photo.artist || articleAuthor;
+  const fullCaption = photo.title
+    ? `${photo.title}, ${artist}. ${photo.caption}`
+    : photo.caption; // plain-text version for alt text
+
   return (
     <div ref={cardRef} className="mb-2">
       <div className="relative group cursor-pointer" onClick={() => setViewerOpen(true)}>
         <img
           src={photo.src}
-          alt={photo.caption}
+          alt={fullCaption}
           className="w-full"
           loading={index > 1 ? "lazy" : undefined}
         />
@@ -72,14 +78,17 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, doubleTapEvent, ca
           <PhotoViewer
             src={photo.src}
             caption={photo.caption}
+            title={photo.title}
+            author={artist}
             onClose={() => setViewerOpen(false)}
           />
         )}
       </AnimatePresence>
 
       <div className="px-5 md:px-8 mt-3">
-        {photo.caption && (
+        {(photo.title || photo.caption) && (
           <p className="text-sm text-white/50 font-body leading-relaxed max-w-2xl mb-3">
+            {photo.title && <><span className="text-white/70 font-medium">{photo.title}</span>{artist && <>, <em className="text-white/60">{artist}</em></>}. </>}
             {photo.caption}
           </p>
         )}
@@ -99,7 +108,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, doubleTapEvent, ca
               {commentCount > 0 ? commentCount : ""}
             </span>
           </button>
-          <ShareButton slug={articleSlug} title={`${articleTitle} — Photo ${index + 1}`} excerpt={photo.caption} variant="dark" />
+          <ShareButton slug={articleSlug} title={`${photo.title || articleTitle}, by ${artist}`} excerpt={photo.caption} variant="dark" />
         </div>
 
         {commentsOpen && (
@@ -200,6 +209,7 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent }:
             index={index}
             articleSlug={article.slug}
             articleTitle={article.title}
+            articleAuthor={article.author}
             doubleTapEvent={perCardTap[index]}
             cardRef={(el) => { cardRefs.current[index] = el; }}
           />
