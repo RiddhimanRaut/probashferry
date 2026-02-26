@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, RotateCcw } from "lucide-react";
 
@@ -10,9 +10,47 @@ interface PhotoViewerProps {
   onClose: () => void;
 }
 
+const MIN_SCALE = 1;
+const MAX_SCALE = 5;
+
 export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps) {
   const [landscape, setLandscape] = useState(false);
   const [showCaption, setShowCaption] = useState(false);
+
+  // Zoom & pan state
+  const [scale, setScale] = useState(1);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+
+  // Refs for gesture tracking
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pinchStartDist = useRef(0);
+  const pinchStartScale = useRef(1);
+  const panStart = useRef({ x: 0, y: 0 });
+  const translateStart = useRef({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const lastTapTime = useRef(0);
+  const hasPannedOrZoomed = useRef(false);
+
+  const zoomed = scale > 1.05;
+
+  // Clamp translation so the image doesn't pan beyond its edges
+  const clampTranslate = useCallback(
+    (x: number, y: number, s: number) => {
+      const maxX = ((s - 1) * window.innerWidth) / 2;
+      const maxY = ((s - 1) * window.innerHeight) / 2;
+      return {
+        x: Math.max(-maxX, Math.min(maxX, x)),
+        y: Math.max(-maxY, Math.min(maxY, y)),
+      };
+    },
+    []
+  );
+
+  // Reset zoom
+  const resetZoom = useCallback(() => {
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+  }, []);
 
   // Try native orientation lock on mobile when landscape is toggled
   useEffect(() => {
@@ -30,19 +68,156 @@ export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps)
   // Close on Escape key
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (zoomed) {
+          resetZoom();
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [onClose, zoomed, resetZoom]);
+
+  // Scroll-wheel zoom (desktop)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.002;
+      setScale((prev) => {
+        const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev + delta * prev));
+        if (next <= 1.05) {
+          setTranslate({ x: 0, y: 0 });
+          return 1;
+        }
+        // Adjust translate to zoom toward cursor
+        const rect = el.getBoundingClientRect();
+        const cx = e.clientX - rect.left - rect.width / 2;
+        const cy = e.clientY - rect.top - rect.height / 2;
+        const ratio = 1 - next / prev;
+        setTranslate((t) => clampTranslate(t.x + cx * ratio, t.y + cy * ratio, next));
+        return next;
+      });
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [clampTranslate]);
+
+  // Touch gestures: pinch-to-zoom + pan
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const getDistance = (t1: Touch, t2: Touch) =>
+      Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+    const handleTouchStart = (e: TouchEvent) => {
+      hasPannedOrZoomed.current = false;
+
+      if (e.touches.length === 2) {
+        // Pinch start
+        e.preventDefault();
+        pinchStartDist.current = getDistance(e.touches[0], e.touches[1]);
+        pinchStartScale.current = scale;
+      } else if (e.touches.length === 1 && zoomed) {
+        // Pan start (only when zoomed)
+        isPanning.current = true;
+        panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        translateStart.current = { ...translate };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch move
+        e.preventDefault();
+        const dist = getDistance(e.touches[0], e.touches[1]);
+        const newScale = Math.max(
+          MIN_SCALE,
+          Math.min(MAX_SCALE, pinchStartScale.current * (dist / pinchStartDist.current))
+        );
+        hasPannedOrZoomed.current = true;
+        if (newScale <= 1.05) {
+          setScale(1);
+          setTranslate({ x: 0, y: 0 });
+        } else {
+          setScale(newScale);
+        }
+      } else if (e.touches.length === 1 && isPanning.current) {
+        // Pan move
+        const dx = e.touches[0].clientX - panStart.current.x;
+        const dy = e.touches[0].clientY - panStart.current.y;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+          hasPannedOrZoomed.current = true;
+        }
+        const clamped = clampTranslate(
+          translateStart.current.x + dx,
+          translateStart.current.y + dy,
+          scale
+        );
+        setTranslate(clamped);
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        isPanning.current = false;
+      }
+      // If down to 1 finger during pinch, start pan from that finger
+      if (e.touches.length === 1 && zoomed) {
+        isPanning.current = true;
+        panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        translateStart.current = { ...translate };
+      }
+    };
+
+    el.addEventListener("touchstart", handleTouchStart, { passive: false });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [scale, translate, zoomed, clampTranslate]);
 
   const toggleLandscape = useCallback(() => {
+    resetZoom();
     setLandscape((prev) => !prev);
-  }, []);
+  }, [resetZoom]);
 
   const handleTap = useCallback(() => {
-    setShowCaption((prev) => !prev);
-  }, []);
+    // Ignore taps that were part of a pan/zoom gesture
+    if (hasPannedOrZoomed.current) {
+      hasPannedOrZoomed.current = false;
+      return;
+    }
+
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapTime.current;
+    lastTapTime.current = now;
+
+    // Double-tap: toggle zoom
+    if (timeSinceLastTap < 300) {
+      if (zoomed) {
+        resetZoom();
+      } else {
+        setScale(2.5);
+      }
+      return;
+    }
+
+    // Single tap (when not zoomed): toggle caption
+    if (!zoomed) {
+      setShowCaption((prev) => !prev);
+    }
+  }, [zoomed, resetZoom]);
 
   return (
     <motion.div
@@ -52,23 +227,62 @@ export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps)
       transition={{ duration: 0.2 }}
       className="fixed inset-0 z-[70] bg-black"
       onClick={handleTap}
+      ref={containerRef}
     >
-      {/* Photo — fills entire screen */}
+      {/* Photo — fills entire screen, supports zoom & pan */}
       <div
-        className={`absolute inset-0 transition-transform duration-300 ease-out ${landscape ? "rotate-90" : ""}`}
-        style={landscape ? { transformOrigin: "center center", width: "100vh", height: "100vw", top: "50%", left: "50%", marginTop: "-50vw", marginLeft: "-50vh", position: "absolute" } : undefined}
+        className={`absolute inset-0 ${landscape ? "rotate-90" : ""}`}
+        style={{
+          ...(landscape
+            ? {
+                transformOrigin: "center center",
+                width: "100vh",
+                height: "100vw",
+                top: "50%",
+                left: "50%",
+                marginTop: "-50vw",
+                marginLeft: "-50vh",
+                position: "absolute" as const,
+              }
+            : {}),
+          transition: zoomed ? "none" : "transform 0.3s ease-out",
+        }}
       >
-        <img
-          src={src}
-          alt={caption}
-          className="w-full h-full object-cover"
-          draggable={false}
-        />
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+            transformOrigin: "center center",
+            transition: zoomed ? "none" : "transform 0.3s ease-out",
+          }}
+        >
+          <img
+            src={src}
+            alt={caption}
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+        </div>
       </div>
 
-      {/* Controls — visible on tap (with caption) */}
+      {/* Zoom indicator */}
       <AnimatePresence>
-        {showCaption && (
+        {zoomed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[71] bg-black/60 backdrop-blur-sm text-white/70 text-xs px-3 py-1.5 rounded-full pointer-events-none"
+          >
+            {Math.round(scale * 100)}%
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Controls — visible on tap (with caption), hidden when zoomed */}
+      <AnimatePresence>
+        {showCaption && !zoomed && (
           <>
             {/* Top bar with buttons */}
             <motion.div
