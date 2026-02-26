@@ -65,7 +65,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-paper" />
       </div>
 
-      <div className="px-5 md:px-8 lg:px-16 max-w-3xl mx-auto -mt-16 relative z-10">
+      <div className="px-5 md:px-8 lg:px-16 max-w-3xl lg:max-w-4xl mx-auto -mt-16 relative z-10">
         <ArticleHeader article={article} />
 
         <div

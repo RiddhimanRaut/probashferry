@@ -8,7 +8,7 @@ export default function ArticleHeader({ article }: { article: ArticleMeta }) {
       <span className="inline-block text-xs font-medium uppercase tracking-wider text-sage bg-sage/10 px-2 py-1 rounded">
         {article.category}
       </span>
-      <h2 className="heading-display text-3xl md:text-4xl lg:text-5xl mt-3 mb-3 text-balance">
+      <h2 className="heading-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl mt-3 mb-3 text-balance">
         {article.title}
       </h2>
       <p className="text-charcoal/60 text-lg mb-3">{article.excerpt}</p>

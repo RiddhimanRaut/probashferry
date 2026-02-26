@@ -340,7 +340,7 @@ export default function TeamPanel() {
     <div className="h-full flex flex-col pt-4 pb-4" data-testid="team-panel">
       {/* Heading */}
       <div className="text-center mb-2 pt-10">
-        <h2 className="heading-display text-3xl text-charcoal">Meet The Team</h2>
+        <h2 className="heading-display text-2xl sm:text-3xl lg:text-4xl text-charcoal">Meet The Team</h2>
         <p className="font-bengali text-charcoal/30 text-sm mt-1">আমাদের দল</p>
         <KanthaDivider className="max-w-[200px] mx-auto" />
       </div>

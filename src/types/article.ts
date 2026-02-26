@@ -1,3 +1,8 @@
+export interface Photo {
+  src: string;
+  caption: string;
+}
+
 export interface ArticleMeta {
   slug: string;
   title: string;
@@ -8,6 +13,7 @@ export interface ArticleMeta {
   category: string;
   readingTime: number;
   lang: string;
+  photos?: Photo[];
 }
 
 export interface Article extends ArticleMeta {

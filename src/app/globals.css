@@ -50,9 +50,6 @@
     font-family: var(--font-playfair), serif;
     @apply font-bold tracking-tight;
   }
-  .panel {
-    @apply min-h-[100dvh] w-screen flex-shrink-0 overflow-y-auto;
-  }
   .btn-primary {
     @apply bg-terracotta text-white px-4 py-2 rounded-lg hover:bg-terracotta-dark transition-colors duration-200;
   }

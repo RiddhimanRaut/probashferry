@@ -7,6 +7,7 @@ import { Article } from "@/types/article";
 import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
+import PhotoGalleryPanel from "./PhotoGalleryPanel";
 import TeamPanel from "./TeamPanel";
 import TableOfContents, { SECTION_ICONS } from "./TableOfContents";
 import Header from "@/components/layout/Header";
@@ -55,6 +56,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
   const [tocOpen, setTocOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [hoverEdge, setHoverEdge] = useState<"left" | "right" | null>(null);
+  const [desktopHover, setDesktopHover] = useState(false);
   const [doubleTapEvent, setDoubleTapEvent] = useState<{ x: number; y: number; id: number } | null>(null);
   const [hearts, setHearts] = useState<HeartBurst[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,6 +147,18 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goNext, goPrev, getScrollContainer]);
 
+  // Desktop: show controls when mouse is near top/bottom edges
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover)");
+    if (!mq.matches) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const nearEdge = e.clientY < 60 || e.clientY > window.innerHeight - 80;
+      setDesktopHover(nearEdge);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   // Show section splash when swiping into a new category
   useLayoutEffect(() => {
     const isArticle = currentIndex >= 1 && currentIndex <= articles.length;
@@ -163,7 +177,8 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
 
   const handleTocOpenChange = useCallback((open: boolean) => {
     setTocOpen(open);
-    if (!open) resetHideTimer();
+    if (open) setShowControls(true);
+    else resetHideTimer();
   }, [resetHideTimer]);
 
   const handleArticleSelect = useCallback((index: number) => {
@@ -297,6 +312,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
   const onTeam = currentIndex === totalPanels - 1;
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalPanels - 1;
+  const controlsVisible = showControls || desktopHover;
 
   return (
     <div
@@ -306,7 +322,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
       onClick={handleClick}
     >
       <AnimatePresence>
-        {!onCover && showControls && (
+        {!onCover && controlsVisible && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,6 +355,12 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
             <CoverPanel />
           ) : onTeam ? (
             <TeamPanel />
+          ) : articles[currentIndex - 1].category === "Photography" ? (
+            <PhotoGalleryPanel
+              article={articles[currentIndex - 1]}
+              isActive={true}
+              doubleTapEvent={doubleTapEvent}
+            />
           ) : (
             <ArticlePanel
               article={articles[currentIndex - 1]}
@@ -468,7 +490,7 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
 
       {/* Controls */}
       <AnimatePresence>
-        {showControls && !onCover && !onTeam && (
+        {controlsVisible && !onCover && !onTeam && (
           <>
             <motion.div
               key="backdrop"
@@ -539,16 +561,16 @@ export default function MagazineViewer({ articles, initialArticleSlug }: Magazin
       {/* Magazine share button — mirrors TOC on the left, cover only */}
       <motion.button
         onClick={handleMagazineShare}
-        animate={{ opacity: onCover && showControls ? 1 : 0, scale: onCover && showControls ? 1 : 0.8 }}
+        animate={{ opacity: onCover && controlsVisible ? 1 : 0, scale: onCover && controlsVisible ? 1 : 0.8 }}
         transition={{ duration: 0.3 }}
         className="fixed bottom-6 left-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center safe-bottom"
         aria-label="Share magazine"
-        style={{ pointerEvents: onCover && showControls ? "auto" : "none" }}
+        style={{ pointerEvents: onCover && controlsVisible ? "auto" : "none" }}
       >
         {shareCopied ? <Check size={18} /> : <Share2 size={18} />}
       </motion.button>
 
-      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={showControls} />
+      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
     </div>
   );
 }

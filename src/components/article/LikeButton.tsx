@@ -8,15 +8,19 @@ interface LikeButtonProps {
   liked: boolean;
   likeCount: number;
   toggleLike: () => Promise<boolean | undefined>;
+  variant?: "light" | "dark";
 }
 
-export default function LikeButton({ liked, likeCount, toggleLike }: LikeButtonProps) {
+export default function LikeButton({ liked, likeCount, toggleLike, variant = "light" }: LikeButtonProps) {
   const { user, promptSignIn } = useAuthContext();
 
   const handleClick = async () => {
     if (!user) { promptSignIn(); return; }
     await toggleLike();
   };
+
+  const unlikedColor = variant === "dark" ? "text-white/40 group-hover:text-sindoor/60" : "text-charcoal/40 group-hover:text-sindoor/60";
+  const unlikedCount = variant === "dark" ? "text-white/40" : "text-charcoal/50";
 
   return (
     <button onClick={handleClick} className="flex items-center gap-2 group transition-colors" aria-label={liked ? "Unlike" : "Like"}>
@@ -30,11 +34,11 @@ export default function LikeButton({ liked, likeCount, toggleLike }: LikeButtonP
         >
           <Heart
             size={22}
-            className={liked ? "fill-sindoor text-sindoor" : "text-charcoal/40 group-hover:text-sindoor/60 transition-colors"}
+            className={liked ? "fill-sindoor text-sindoor" : `${unlikedColor} transition-colors`}
           />
         </motion.div>
       </AnimatePresence>
-      <span className={`text-sm tabular-nums ${liked ? "text-sindoor font-medium" : "text-charcoal/50"}`}>
+      <span className={`text-sm tabular-nums ${liked ? "text-sindoor font-medium" : unlikedCount}`}>
         {likeCount > 0 ? likeCount : ""}
       </span>
     </button>

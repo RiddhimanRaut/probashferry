@@ -8,6 +8,13 @@ import { calculateReadingTime } from "./utils";
 
 const articlesDirectory = path.join(process.cwd(), "content/articles");
 
+const CATEGORY_ORDER: Record<string, number> = {
+  Essays: 0,
+  Photography: 1,
+  Comics: 2,
+  Art: 3,
+};
+
 export async function getAllArticles(lang: string = "en"): Promise<Article[]> {
   const dir = path.join(articlesDirectory, lang);
   if (!fs.existsSync(dir)) return [];
@@ -21,9 +28,11 @@ export async function getAllArticles(lang: string = "en"): Promise<Article[]> {
     })
   );
 
-  return articles.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  return articles.sort((a, b) => {
+    const catDiff = (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99);
+    if (catDiff !== 0) return catDiff;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 }
 
 export async function getArticleBySlug(slug: string, lang: string = "en"): Promise<Article> {
@@ -46,5 +55,6 @@ export async function getArticleBySlug(slug: string, lang: string = "en"): Promi
     lang,
     content,
     html: htmlContent,
+    photos: data.photos || undefined,
   };
 }

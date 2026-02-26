@@ -7,9 +7,10 @@ interface ShareButtonProps {
   slug: string;
   title: string;
   excerpt: string;
+  variant?: "light" | "dark";
 }
 
-export default function ShareButton({ slug, title, excerpt }: ShareButtonProps) {
+export default function ShareButton({ slug, title, excerpt, variant = "light" }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const url = `https://probashferry.vercel.app/read/${slug}`;
@@ -33,6 +34,10 @@ export default function ShareButton({ slug, title, excerpt }: ShareButtonProps) 
     }
   }, [title, excerpt, url]);
 
+  const iconColor = variant === "dark"
+    ? "text-white/40 group-hover:text-terracotta/60"
+    : "text-charcoal/40 group-hover:text-terracotta/60";
+
   return (
     <button
       onClick={handleShare}
@@ -44,7 +49,7 @@ export default function ShareButton({ slug, title, excerpt }: ShareButtonProps) 
       ) : (
         <Share2
           size={21}
-          className="text-charcoal/40 group-hover:text-terracotta/60 transition-colors"
+          className={`${iconColor} transition-colors`}
         />
       )}
       {copied && (

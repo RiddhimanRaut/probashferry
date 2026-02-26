@@ -28,7 +28,7 @@ export default function CoverPanel({
 
       {/* Magazine title — centered, CSS animation for reliable first-load */}
       <div className="relative z-10 flex flex-col items-center px-8 animate-fade-up">
-        <h1 className="font-heading text-6xl sm:text-7xl md:text-8xl text-white tracking-tight leading-none text-center">
+        <h1 className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white tracking-tight leading-none text-center">
           Probashferry
         </h1>
 
