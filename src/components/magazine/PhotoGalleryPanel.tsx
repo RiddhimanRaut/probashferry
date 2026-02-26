@@ -37,6 +37,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const lastHandledTap = useRef(0);
+  const lastDoubleTapTime = useRef(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const likedRef = useRef(liked);
@@ -52,6 +53,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
     if (!doubleTapEvent || doubleTapEvent.id === lastHandledTap.current) return;
     lastHandledTap.current = doubleTapEvent.id;
     // Cancel pending single-tap (open viewer) since this is a double-tap (like)
+    lastDoubleTapTime.current = Date.now();
     if (singleTapTimer.current) {
       clearTimeout(singleTapTimer.current);
       singleTapTimer.current = null;
@@ -68,6 +70,8 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
   return (
     <div ref={cardRef} className="mb-2">
       <div className="relative group cursor-pointer" onClick={() => {
+        // Skip if this click is the second tap of a recent double-tap
+        if (Date.now() - lastDoubleTapTime.current < 600) return;
         // Delay opening full-screen to allow double-tap (like) to cancel it
         singleTapTimer.current = setTimeout(() => {
           singleTapTimer.current = null;

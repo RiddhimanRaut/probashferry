@@ -211,7 +211,8 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
     setLandscape((prev) => !prev);
   }, [resetZoom]);
 
-  const handleTap = useCallback(() => {
+  const handleTap = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
     // Ignore taps that were part of a pan/zoom gesture
     if (hasPannedOrZoomed.current) {
       hasPannedOrZoomed.current = false;
