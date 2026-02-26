@@ -6,18 +6,24 @@ import { useAuthContext } from "@/providers/AuthProvider";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
 
-export default function CommentsSection({ articleId }: { articleId: string }) {
+interface CommentsSectionProps {
+  articleId: string;
+  variant?: "light" | "dark";
+}
+
+export default function CommentsSection({ articleId, variant = "light" }: CommentsSectionProps) {
   const { comments, loading, addComment, editComment, removeComment } = useComments(articleId);
   const { user } = useAuthContext();
+  const dark = variant === "dark";
 
   return (
     <div className="mt-2 mb-4">
-      <CommentForm onSubmit={addComment} />
-      <div className="mt-4 divide-y divide-charcoal/5">
+      <CommentForm onSubmit={addComment} variant={variant} />
+      <div className={`mt-4 divide-y ${dark ? "divide-white/10" : "divide-charcoal/5"}`}>
         {loading ? (
-          <p className="text-sm text-charcoal/30 py-4">Loading comments...</p>
+          <p className={`text-sm py-4 ${dark ? "text-white/30" : "text-charcoal/30"}`}>Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-charcoal/30 py-4">Be the first to comment</p>
+          <p className={`text-sm py-4 ${dark ? "text-white/30" : "text-charcoal/30"}`}>Be the first to comment</p>
         ) : (
           <AnimatePresence initial={false}>
             {comments.map((comment) => (
@@ -27,6 +33,7 @@ export default function CommentsSection({ articleId }: { articleId: string }) {
                   isOwner={user?.uid === comment.userId}
                   onEdit={(text) => editComment(comment.id, text)}
                   onDelete={() => removeComment(comment.id)}
+                  variant={variant}
                 />
               </motion.div>
             ))}

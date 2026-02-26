@@ -112,8 +112,8 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
         </div>
 
         {commentsOpen && (
-          <div className="bg-paper rounded-xl p-4 mb-4">
-            <CommentsSection articleId={photoId} />
+          <div className="mb-4">
+            <CommentsSection articleId={photoId} variant="dark" />
           </div>
         )}
       </div>
