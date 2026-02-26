@@ -52,6 +52,23 @@ export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps)
     setTranslate({ x: 0, y: 0 });
   }, []);
 
+  // Push history state so Android back gesture / browser back closes the viewer
+  useEffect(() => {
+    window.history.pushState({ photoViewer: true }, "");
+    const handlePopState = () => {
+      onClose();
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      // If the viewer is closing for a reason other than back (e.g. tap X, Escape),
+      // clean up the history entry we pushed
+      if (window.history.state?.photoViewer) {
+        window.history.back();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Try native orientation lock on mobile when landscape is toggled
   useEffect(() => {
     const orient = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
@@ -227,6 +244,9 @@ export default function PhotoViewer({ src, caption, onClose }: PhotoViewerProps)
       transition={{ duration: 0.2 }}
       className="fixed inset-0 z-[70] bg-black"
       onClick={handleTap}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
       ref={containerRef}
     >
       {/* Photo — fills entire screen, supports zoom & pan */}
