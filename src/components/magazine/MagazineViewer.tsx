@@ -8,6 +8,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
 import PhotoGalleryPanel from "./PhotoGalleryPanel";
+import ComicsGalleryPanel from "./ComicsGalleryPanel";
 import ArtGalleryPanel from "./ArtGalleryPanel";
 import TeamPanel from "./TeamPanel";
 import TableOfContents, { SECTION_ICONS } from "./TableOfContents";
@@ -154,8 +155,12 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
     const mq = window.matchMedia("(hover: hover)");
     if (!mq.matches) return;
     const handleMouseMove = (e: MouseEvent) => {
-      const nearEdge = e.clientY < 60 || e.clientY > window.innerHeight - 80;
-      setDesktopHover(nearEdge);
+      const nearTopBottom = e.clientY < 60 || e.clientY > window.innerHeight - 80;
+      setDesktopHover(nearTopBottom);
+      // Edge arrow hover detection (strip is pointer-events:none so we detect here)
+      if (e.clientX < 64) setHoverEdge("left");
+      else if (e.clientX > window.innerWidth - 64) setHoverEdge("right");
+      else setHoverEdge(null);
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
@@ -371,6 +376,14 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               initialPhotoIndex={initialPhotoIndex}
               getControlsVisible={getControlsVisible}
             />
+          ) : articles[currentIndex - 1].category === "Comics" ? (
+            <ComicsGalleryPanel
+              article={articles[currentIndex - 1]}
+              isActive={true}
+              doubleTapEvent={doubleTapEvent}
+              initialPhotoIndex={initialPhotoIndex}
+              getControlsVisible={getControlsVisible}
+            />
           ) : articles[currentIndex - 1].category === "Art" ? (
             <ArtGalleryPanel
               article={articles[currentIndex - 1]}
@@ -389,39 +402,33 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
         </motion.div>
       </AnimatePresence>
 
-      {/* Desktop hover edge zones — show arrow on hover, click to navigate */}
+      {/* Desktop edge nav — pointer-events:none strip so scrollbar stays usable, button is interactive */}
       {canGoPrev && !sectionSplash && (
-        <div
-          className="fixed left-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
-          onMouseEnter={() => setHoverEdge("left")}
-          onMouseLeave={() => setHoverEdge(null)}
-          onClick={(e) => { e.stopPropagation(); goPrev(); }}
-        >
-          <motion.div
+        <div className="fixed left-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center pointer-events-none">
+          <motion.button
             initial={false}
             animate={{ opacity: hoverEdge === "left" ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer pointer-events-auto"
+            onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            aria-label="Previous page"
           >
             <ChevronLeft size={20} />
-          </motion.div>
+          </motion.button>
         </div>
       )}
       {canGoNext && !sectionSplash && (
-        <div
-          className="fixed right-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center cursor-pointer"
-          onMouseEnter={() => setHoverEdge("right")}
-          onMouseLeave={() => setHoverEdge(null)}
-          onClick={(e) => { e.stopPropagation(); goNext(); }}
-        >
-          <motion.div
+        <div className="fixed right-0 top-0 bottom-0 w-16 z-30 hidden md:flex items-center justify-center pointer-events-none">
+          <motion.button
             initial={false}
             animate={{ opacity: hoverEdge === "right" ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-charcoal/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer pointer-events-auto"
+            onClick={(e) => { e.stopPropagation(); goNext(); }}
+            aria-label="Next page"
           >
             <ChevronRight size={20} />
-          </motion.div>
+          </motion.button>
         </div>
       )}
 
