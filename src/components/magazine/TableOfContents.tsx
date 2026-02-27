@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { List, X, Heart, Users, ChevronRight, ChevronDown, PenLine, Camera, BookImage, Palette } from "lucide-react";
 import { ArticleMeta } from "@/types/article";
+import { tagColor } from "@/lib/tags";
 import { getDoc } from "@/lib/firebase/firestore-rest";
 
 const SECTIONS = ["Essays", "Photography", "Comics", "Art"] as const;
@@ -176,22 +177,35 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                                     <button
                                       key={article.slug}
                                       onClick={() => handleSelectArticle(article)}
-                                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                                      className={`w-full text-left p-2.5 rounded-lg transition-colors flex items-center gap-2 ${
                                         isActive ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
                                       }`}
                                     >
-                                      <p className="font-medium text-sm">{article.title}</p>
-                                      <div className="flex items-center gap-3 mt-0.5">
-                                        <span className="text-xs text-charcoal/40">
-                                          {article.author} &middot; {article.readingTime} min
-                                        </span>
+                                      <span className="font-medium text-sm truncate shrink">{article.title}</span>
+                                      <span className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                        {article.flavor && (
+                                          <span
+                                            className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                            style={{ color: tagColor(article.flavor), backgroundColor: `${tagColor(article.flavor)}15` }}
+                                          >
+                                            {article.flavor}
+                                          </span>
+                                        )}
+                                        {article.type && (
+                                          <span
+                                            className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                            style={{ color: tagColor(article.type), backgroundColor: `${tagColor(article.type)}15` }}
+                                          >
+                                            {article.type}
+                                          </span>
+                                        )}
                                         {count > 0 && (
-                                          <span className="flex items-center gap-1 text-xs">
-                                            <Heart size={11} className="fill-sindoor text-sindoor" />
+                                          <span className="flex items-center gap-0.5 text-xs">
+                                            <Heart size={10} className="fill-sindoor text-sindoor" />
                                             <span className="text-sindoor/70 tabular-nums">{count}</span>
                                           </span>
                                         )}
-                                      </div>
+                                      </span>
                                     </button>
                                   );
                                 })}

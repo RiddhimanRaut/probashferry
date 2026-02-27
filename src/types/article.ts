@@ -17,6 +17,8 @@ export interface ArticleMeta {
   readingTime: number;
   lang: string;
   photos?: Photo[];
+  flavor?: string;
+  type?: string;
 }
 
 export interface Article extends ArticleMeta {

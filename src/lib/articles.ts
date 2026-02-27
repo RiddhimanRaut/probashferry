@@ -56,5 +56,7 @@ export async function getArticleBySlug(slug: string, lang: string = "en"): Promi
     content,
     html: htmlContent,
     photos: data.photos || undefined,
+    flavor: data.flavor || undefined,
+    type: data.type || undefined,
   };
 }
