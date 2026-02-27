@@ -35,6 +35,13 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
   const lastTapTime = useRef(0);
   const hasPannedOrZoomed = useRef(false);
 
+  // Refs so touch handlers always see current values without re-binding
+  const landscapeRef = useRef(landscape);
+  landscapeRef.current = landscape;
+  const scrollableRef = useRef(!!scrollable);
+  scrollableRef.current = !!scrollable;
+  const imgNaturalSize = useRef({ w: 0, h: 0 });
+
   const zoomed = scale > 1.05;
 
   // Reset scroll position when zooming in (transform pan takes over)
@@ -47,8 +54,17 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
   // Clamp translation so the image doesn't pan beyond its edges
   const clampTranslate = useCallback(
     (x: number, y: number, s: number) => {
-      const maxX = ((s - 1) * window.innerWidth) / 2;
-      const maxY = ((s - 1) * window.innerHeight) / 2;
+      const isLand = landscapeRef.current;
+      // In landscape the container dimensions are swapped
+      const vw = isLand ? window.innerHeight : window.innerWidth;
+      const vh = isLand ? window.innerWidth : window.innerHeight;
+
+      const maxX = ((s - 1) * vw) / 2;
+      // For scrollable images the rendered height may exceed the container at scale=1
+      const nat = imgNaturalSize.current;
+      const renderedH = scrollableRef.current && nat.w > 0 ? vw * (nat.h / nat.w) : vh;
+      const maxY = Math.max(0, (renderedH * s - vh) / 2);
+
       return {
         x: Math.max(-maxX, Math.min(maxX, x)),
         y: Math.max(-maxY, Math.min(maxY, y)),
@@ -144,6 +160,9 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
     const getDistance = (t1: Touch, t2: Touch) =>
       Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
 
+    // Allow pan when zoomed OR in scrollable+landscape (native scroll doesn't work with CSS rotation)
+    const canPan = () => zoomed || (scrollableRef.current && landscapeRef.current);
+
     const handleTouchStart = (e: TouchEvent) => {
       hasPannedOrZoomed.current = false;
 
@@ -152,8 +171,8 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
         e.preventDefault();
         pinchStartDist.current = getDistance(e.touches[0], e.touches[1]);
         pinchStartScale.current = scale;
-      } else if (e.touches.length === 1 && zoomed) {
-        // Pan start (only when zoomed)
+      } else if (e.touches.length === 1 && canPan()) {
+        // Pan start
         isPanning.current = true;
         panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         translateStart.current = { ...translate };
@@ -177,10 +196,12 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
           setScale(newScale);
         }
       } else if (e.touches.length === 1 && isPanning.current) {
-        // Pan move
-        const dx = e.touches[0].clientX - panStart.current.x;
-        const dy = e.touches[0].clientY - panStart.current.y;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        // Pan move — swap axes in landscape since container is rotated 90° CW
+        const rawDx = e.touches[0].clientX - panStart.current.x;
+        const rawDy = e.touches[0].clientY - panStart.current.y;
+        const dx = landscapeRef.current ? rawDy : rawDx;
+        const dy = landscapeRef.current ? -rawDx : rawDy;
+        if (Math.abs(rawDx) > 5 || Math.abs(rawDy) > 5) {
           hasPannedOrZoomed.current = true;
         }
         const clamped = clampTranslate(
@@ -197,7 +218,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
         isPanning.current = false;
       }
       // If down to 1 finger during pinch, start pan from that finger
-      if (e.touches.length === 1 && zoomed) {
+      if (e.touches.length === 1 && canPan()) {
         isPanning.current = true;
         panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         translateStart.current = { ...translate };
@@ -278,8 +299,8 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
                 position: "absolute" as const,
               }
             : {}),
-          ...(scrollable && !zoomed
-            ? { overflowY: "auto" as const, overflowX: "hidden" as const }
+          ...(scrollable && !zoomed && !landscape
+            ? { overflowY: "auto" as const, overflowX: "hidden" as const, overscrollBehavior: "contain" as const }
             : {}),
           transition: zoomed ? "none" : "transform 0.3s ease-out",
         }}
@@ -301,6 +322,10 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
             className={scrollable ? "w-full" : "w-full h-full object-cover"}
             style={scrollable ? { margin: "auto 0" } : undefined}
             draggable={false}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              imgNaturalSize.current = { w: img.naturalWidth, h: img.naturalHeight };
+            }}
           />
         </div>
       </div>
