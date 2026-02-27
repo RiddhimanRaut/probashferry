@@ -60,14 +60,21 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
       const vh = isLand ? window.innerWidth : window.innerHeight;
 
       const maxX = ((s - 1) * vw) / 2;
-      // For scrollable images the rendered height may exceed the container at scale=1
+
+      // For non-scrollable (object-cover, h-full): renderedH = vh, bounds are symmetric.
+      // For scrollable: image starts at top of container, so bounds are asymmetric.
+      // General formula derived from keeping scaled content within viewport:
+      //   minY = vh - renderedH * (1 + s) / 2   (pan up to see bottom)
+      //   maxY = renderedH * (s - 1) / 2         (pan down — 0 at scale=1)
+      // When renderedH = vh these collapse to the symmetric ±(s-1)*vh/2.
       const nat = imgNaturalSize.current;
       const renderedH = scrollableRef.current && nat.w > 0 ? vw * (nat.h / nat.w) : vh;
-      const maxY = Math.max(0, (renderedH * s - vh) / 2);
+      const minY = vh - renderedH * (1 + s) / 2;
+      const maxY = renderedH * (s - 1) / 2;
 
       return {
         x: Math.max(-maxX, Math.min(maxX, x)),
-        y: Math.max(-maxY, Math.min(maxY, y)),
+        y: Math.max(minY, Math.min(maxY, y)),
       };
     },
     []
@@ -275,7 +282,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[70] bg-black"
+      className="fixed inset-0 z-[70] bg-black overscroll-contain"
       onClick={handleTap}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
