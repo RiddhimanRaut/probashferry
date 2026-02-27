@@ -41,6 +41,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
   const scrollableRef = useRef(!!scrollable);
   scrollableRef.current = !!scrollable;
   const imgNaturalSize = useRef({ w: 0, h: 0 });
+  const imgElRef = useRef<HTMLImageElement>(null);
 
   const zoomed = scale > 1.05;
 
@@ -67,7 +68,12 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
       //   minY = vh - renderedH * (1 + s) / 2   (pan up to see bottom)
       //   maxY = renderedH * (s - 1) / 2         (pan down — 0 at scale=1)
       // When renderedH = vh these collapse to the symmetric ±(s-1)*vh/2.
-      const nat = imgNaturalSize.current;
+      // Read natural size from ref first, fall back to onLoad cache, then DOM element
+      let nat = imgNaturalSize.current;
+      if (nat.w === 0 && imgElRef.current) {
+        nat = { w: imgElRef.current.naturalWidth, h: imgElRef.current.naturalHeight };
+        if (nat.w > 0) imgNaturalSize.current = nat; // cache for next time
+      }
       const renderedH = scrollableRef.current && nat.w > 0 ? vw * (nat.h / nat.w) : vh;
       const minY = vh - renderedH * (1 + s) / 2;
       const maxY = renderedH * (s - 1) / 2;
@@ -203,6 +209,8 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
           setScale(newScale);
         }
       } else if (e.touches.length === 1 && isPanning.current) {
+        // Prevent browser pull-to-refresh / overscroll during pan
+        e.preventDefault();
         // Pan move — swap axes in landscape since container is rotated 90° CW
         const rawDx = e.touches[0].clientX - panStart.current.x;
         const rawDy = e.touches[0].clientY - panStart.current.y;
@@ -324,6 +332,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
           }}
         >
           <img
+            ref={imgElRef}
             src={src}
             alt={caption}
             className={scrollable ? "w-full" : "w-full h-full object-cover"}
