@@ -123,6 +123,7 @@ function ArtCard({ photo, index, articleSlug, articleTitle, articleAuthor, doubl
               title={photo.title}
               author={artist}
               onClose={() => setViewerOpen(false)}
+              scrollable
             />
           )}
         </AnimatePresence>

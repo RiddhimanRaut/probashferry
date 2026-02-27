@@ -10,12 +10,13 @@ interface PhotoViewerProps {
   title?: string;
   author?: string;
   onClose: () => void;
+  scrollable?: boolean;
 }
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 
-export default function PhotoViewer({ src, caption, title, author, onClose }: PhotoViewerProps) {
+export default function PhotoViewer({ src, caption, title, author, onClose, scrollable }: PhotoViewerProps) {
   const [landscape, setLandscape] = useState(false);
   const [showCaption, setShowCaption] = useState(false);
 
@@ -25,6 +26,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
 
   // Refs for gesture tracking
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const pinchStartDist = useRef(0);
   const pinchStartScale = useRef(1);
   const panStart = useRef({ x: 0, y: 0 });
@@ -34,6 +36,13 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
   const hasPannedOrZoomed = useRef(false);
 
   const zoomed = scale > 1.05;
+
+  // Reset scroll position when zooming in (transform pan takes over)
+  useEffect(() => {
+    if (scrollable && zoomed && scrollWrapperRef.current) {
+      scrollWrapperRef.current.scrollTop = 0;
+    }
+  }, [scrollable, zoomed]);
 
   // Clamp translation so the image doesn't pan beyond its edges
   const clampTranslate = useCallback(
@@ -254,6 +263,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
     >
       {/* Photo — fills entire screen, supports zoom & pan */}
       <div
+        ref={scrollable ? scrollWrapperRef : undefined}
         className={`absolute inset-0 ${landscape ? "rotate-90" : ""}`}
         style={{
           ...(landscape
@@ -268,13 +278,18 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
                 position: "absolute" as const,
               }
             : {}),
+          ...(scrollable && !zoomed
+            ? { overflowY: "auto" as const, overflowX: "hidden" as const }
+            : {}),
           transition: zoomed ? "none" : "transform 0.3s ease-out",
         }}
       >
         <div
           style={{
             width: "100%",
-            height: "100%",
+            ...(scrollable
+              ? { minHeight: "100%", display: "flex", flexDirection: "column" as const }
+              : { height: "100%" }),
             transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
             transformOrigin: "center center",
             transition: zoomed ? "none" : "transform 0.3s ease-out",
@@ -283,7 +298,8 @@ export default function PhotoViewer({ src, caption, title, author, onClose }: Ph
           <img
             src={src}
             alt={caption}
-            className="w-full h-full object-cover"
+            className={scrollable ? "w-full" : "w-full h-full object-cover"}
+            style={scrollable ? { margin: "auto 0" } : undefined}
             draggable={false}
           />
         </div>
