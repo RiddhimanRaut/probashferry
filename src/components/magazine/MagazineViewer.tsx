@@ -8,6 +8,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import CoverPanel from "./CoverPanel";
 import ArticlePanel from "./ArticlePanel";
 import PhotoGalleryPanel from "./PhotoGalleryPanel";
+import ArtGalleryPanel from "./ArtGalleryPanel";
 import TeamPanel from "./TeamPanel";
 import TableOfContents, { SECTION_ICONS } from "./TableOfContents";
 import Header from "@/components/layout/Header";
@@ -361,6 +362,14 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
             <TeamPanel />
           ) : articles[currentIndex - 1].category === "Photography" ? (
             <PhotoGalleryPanel
+              article={articles[currentIndex - 1]}
+              isActive={true}
+              doubleTapEvent={doubleTapEvent}
+              initialPhotoIndex={initialPhotoIndex}
+              getControlsVisible={getControlsVisible}
+            />
+          ) : articles[currentIndex - 1].category === "Art" ? (
+            <ArtGalleryPanel
               article={articles[currentIndex - 1]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}

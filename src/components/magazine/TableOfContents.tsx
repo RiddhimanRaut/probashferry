@@ -146,7 +146,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                               </span>
                             )}
                           </button>
-                          {hasArticles && section !== "Photography" && (
+                          {hasArticles && section !== "Photography" && section !== "Art" && (
                             <button
                               onClick={() => toggleSection(section)}
                               className="p-3 rounded-lg hover:bg-charcoal/5 text-charcoal/50 transition-colors"

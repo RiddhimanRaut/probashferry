@@ -3,6 +3,7 @@ export interface Photo {
   caption: string;
   title?: string;
   artist?: string;
+  medium?: string;
 }
 
 export interface ArticleMeta {
