@@ -220,6 +220,9 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
 
   const fireDoubleTap = useCallback((x: number, y: number) => {
     if (currentIndexRef.current === 0 || currentIndexRef.current === totalPanels - 1) return; // no hearts on cover or team
+    // Only fire on content cards, not hero headers
+    const el = document.elementFromPoint(x, y);
+    if (!el?.closest("[data-likeable]")) return;
     spawnHeart(x, y);
     setDoubleTapEvent({ x, y, id: Date.now() });
   }, [spawnHeart, totalPanels]);

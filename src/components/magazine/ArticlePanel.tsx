@@ -53,7 +53,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
   }, [doubleTapEvent]);
 
   return (
-    <div className="relative bg-paper min-h-full" ref={setScrollParent}>
+    <div className="relative bg-paper min-h-full" ref={setScrollParent} data-likeable>
       {isActive && <ReadingProgress progress={progress} />}
 
       <div className="relative h-[40vh] min-h-[250px] overflow-hidden">

@@ -67,7 +67,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
     : photo.caption; // plain-text version for alt text
 
   return (
-    <div ref={cardRef} className="mb-2">
+    <div ref={cardRef} className="mb-2" data-likeable>
       <div className="relative group cursor-pointer" onClick={() => {
         // If controls are showing, this tap is to dismiss them — don't open viewer
         if (getControlsVisible?.()) return;
@@ -102,6 +102,7 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
             title={photo.title}
             author={artist}
             onClose={() => setViewerOpen(false)}
+            scrollable
           />
         )}
       </AnimatePresence>

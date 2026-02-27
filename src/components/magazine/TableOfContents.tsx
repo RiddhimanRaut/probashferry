@@ -177,15 +177,15 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                                     <button
                                       key={article.slug}
                                       onClick={() => handleSelectArticle(article)}
-                                      className={`w-full text-left p-2.5 rounded-lg transition-colors flex items-center gap-2 ${
+                                      className={`w-full text-left p-2.5 rounded-lg transition-colors ${
                                         isActive ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
                                       }`}
                                     >
-                                      <span className="font-medium text-sm truncate shrink">{article.title}</span>
-                                      <span className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                      <p className="font-medium text-sm">{article.title}</p>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
                                         {article.flavor && (
                                           <span
-                                            className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                            className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
                                             style={{ color: tagColor(article.flavor), backgroundColor: `${tagColor(article.flavor)}15` }}
                                           >
                                             {article.flavor}
@@ -193,19 +193,19 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                                         )}
                                         {article.type && (
                                           <span
-                                            className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                            className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
                                             style={{ color: tagColor(article.type), backgroundColor: `${tagColor(article.type)}15` }}
                                           >
                                             {article.type}
                                           </span>
                                         )}
                                         {count > 0 && (
-                                          <span className="flex items-center gap-0.5 text-xs">
+                                          <span className="flex items-center gap-0.5 text-xs ml-auto">
                                             <Heart size={10} className="fill-sindoor text-sindoor" />
                                             <span className="text-sindoor/70 tabular-nums">{count}</span>
                                           </span>
                                         )}
-                                      </span>
+                                      </div>
                                     </button>
                                   );
                                 })}

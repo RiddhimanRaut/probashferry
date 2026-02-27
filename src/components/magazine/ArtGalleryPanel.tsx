@@ -70,7 +70,7 @@ function ArtCard({ photo, index, articleSlug, articleTitle, articleAuthor, doubl
     : photo.caption;
 
   return (
-    <div ref={cardRef} className="py-12 md:py-20">
+    <div ref={cardRef} className="py-12 md:py-20" data-likeable>
       <div ref={animRef}>
         {/* Spotlight background + artwork image */}
         <motion.div
