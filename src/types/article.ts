@@ -5,6 +5,8 @@ export interface Photo {
   artist?: string;
   medium?: string;
   panels?: string[];
+  flavor?: string;
+  type?: string;
 }
 
 export interface ArticleMeta {

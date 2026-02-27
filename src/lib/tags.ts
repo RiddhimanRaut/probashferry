@@ -17,6 +17,14 @@ const TAG_COLORS: Record<string, string> = {
   Memoir:   "#7B6B5A",   // taupe
   Report:   "#4A6B8B",   // slate blue
   Letter:   "#5A7B5A",   // forest
+  Street:       "#8B7355",   // warm khaki
+  Portrait:     "#6B7B8B",   // cool slate
+  Documentary:  "#5A7B6B",   // sage green
+  Painting:     "#8B5A6B",   // dusty mauve
+  "Folk Art":   "#7B6B4A",   // earthy brown
+  Strip:        "#7B8B5A",   // olive gold
+  "Single Panel": "#6B8B7B", // seafoam
+  Fantasy:      "#5A6B8B",   // twilight blue
 };
 
 const FALLBACK = "#6B7B6B";

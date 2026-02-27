@@ -15,6 +15,7 @@ import { useReadingProgress } from "@/hooks/useReadingProgress";
 import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { formatDate } from "@/lib/utils";
+import { tagColor } from "@/lib/tags";
 
 /* ------------------------------------------------------------------ */
 /*  ComicCarousel — horizontal swipe carousel for multi-panel comics    */
@@ -25,13 +26,15 @@ interface ComicCarouselProps {
   alt: string;
   currentPanel: number;
   onPanelChange: (index: number) => void;
+  onPanelTap?: (panelIndex: number) => void;
 }
 
-function ComicCarousel({ panels, alt, currentPanel, onPanelChange }: ComicCarouselProps) {
+function ComicCarousel({ panels, alt, currentPanel, onPanelChange, onPanelTap }: ComicCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const x = useMotionValue(0);
   const panelAtDragStart = useRef(0);
+  const dragEndTime = useRef(0);
 
   // Total slides = individual panels + 1 composite "full page" view
   const totalSlides = panels.length + 1;
@@ -75,6 +78,7 @@ function ComicCarousel({ panels, alt, currentPanel, onPanelChange }: ComicCarous
           panelAtDragStart.current = currentPanel;
         }}
         onDragEnd={(_, info) => {
+          dragEndTime.current = Date.now();
           const dx = info.offset.x;
           const vx = info.velocity.x;
           let next = panelAtDragStart.current;
@@ -89,8 +93,12 @@ function ComicCarousel({ panels, alt, currentPanel, onPanelChange }: ComicCarous
         {panels.map((src, i) => (
           <div
             key={i}
-            className="flex-shrink-0"
+            className="flex-shrink-0 cursor-pointer"
             style={{ width: containerWidth || "100%" }}
+            onClick={() => {
+              if (Date.now() - dragEndTime.current < 200) return;
+              onPanelTap?.(i);
+            }}
           >
             <img
               src={src}
@@ -252,6 +260,18 @@ function ComicCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
                 alt={photo.title || photo.caption}
                 currentPanel={currentPanel}
                 onPanelChange={setCurrentPanel}
+                onPanelTap={() => {
+                  if (getControlsVisible?.()) return;
+                  if (singleTapTimer.current) {
+                    clearTimeout(singleTapTimer.current);
+                    singleTapTimer.current = null;
+                    return;
+                  }
+                  singleTapTimer.current = setTimeout(() => {
+                    singleTapTimer.current = null;
+                    setViewerOpen(true);
+                  }, 400);
+                }}
               />
             ) : (
               <div
@@ -289,29 +309,28 @@ function ComicCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
               {artist && (
                 <p className="text-sm text-white/50 mt-0.5">{artist}</p>
               )}
+              {(photo.flavor || photo.type) && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  {photo.flavor && (
+                    <span
+                      className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                      style={{ color: tagColor(photo.flavor), backgroundColor: `${tagColor(photo.flavor)}15` }}
+                    >
+                      {photo.flavor}
+                    </span>
+                  )}
+                  {photo.type && (
+                    <span
+                      className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                      style={{ color: tagColor(photo.type), backgroundColor: `${tagColor(photo.type)}15` }}
+                    >
+                      {photo.type}
+                    </span>
+                  )}
+                </div>
+              )}
               {photo.caption && (
                 <p className="text-sm text-white/40 leading-relaxed mt-2">{photo.caption}</p>
-              )}
-
-              {/* Full-screen tap target for multi-panel comics */}
-              {hasMultiplePanels && (
-                <button
-                  onClick={() => {
-                    if (singleTapTimer.current) {
-                      clearTimeout(singleTapTimer.current);
-                      singleTapTimer.current = null;
-                      return;
-                    }
-                    singleTapTimer.current = setTimeout(() => {
-                      singleTapTimer.current = null;
-                      setViewerOpen(true);
-                    }, 400);
-                  }}
-                  className="mt-2 flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
-                >
-                  <Maximize2 size={12} />
-                  <span>View full-screen</span>
-                </button>
               )}
 
               {/* Action bar */}
@@ -351,6 +370,9 @@ function ComicCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
               author={artist}
               onClose={() => setViewerOpen(false)}
               scrollable
+              images={hasMultiplePanels ? panels : undefined}
+              initialIndex={currentPanel < panels.length ? currentPanel : 0}
+              onIndexChange={(i) => setCurrentPanel(i)}
             />
           )}
         </AnimatePresence>
@@ -368,10 +390,12 @@ interface ComicsGalleryPanelProps {
   isActive: boolean;
   doubleTapEvent: { x: number; y: number; id: number } | null;
   initialPhotoIndex?: number;
+  scrollToCard?: { index: number; nonce: number } | null;
   getControlsVisible?: () => boolean;
+  onActiveCardChange?: (index: number) => void;
 }
 
-export default function ComicsGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex, getControlsVisible }: ComicsGalleryPanelProps) {
+export default function ComicsGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex, scrollToCard, getControlsVisible, onActiveCardChange }: ComicsGalleryPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
   const initialScrollDone = useRef(false);
@@ -382,6 +406,27 @@ export default function ComicsGalleryPanel({ article, isActive, doubleTapEvent, 
       if (parent) (scrollRef as React.MutableRefObject<HTMLElement | null>).current = parent;
     }
   }, []);
+
+  // Track which card is most visible via IntersectionObserver
+  useEffect(() => {
+    const refs = cardRefs.current;
+    if (!refs.length || !onActiveCardChange) return;
+    const ratios = new Map<number, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const idx = refs.indexOf(entry.target as HTMLDivElement);
+          if (idx !== -1) ratios.set(idx, entry.intersectionRatio);
+        }
+        let best = -1, bestRatio = 0;
+        ratios.forEach((r, i) => { if (r > bestRatio) { best = i; bestRatio = r; } });
+        if (best !== -1) onActiveCardChange(best);
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    for (const el of refs) { if (el) observer.observe(el); }
+    return () => observer.disconnect();
+  }, [onActiveCardChange, article.photos]);
 
   const photos = article.photos || [];
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -410,19 +455,27 @@ export default function ComicsGalleryPanel({ article, isActive, doubleTapEvent, 
     }
   }, [doubleTapEvent]);
 
-  // Scroll to specific comic when arriving via shared link
+  // Scroll to specific comic when arriving via shared link or TOC (on mount)
   useEffect(() => {
     if (initialPhotoIndex == null || initialScrollDone.current) return;
     initialScrollDone.current = true;
+    // 500ms delay: wait for panel slide animation (200ms) + layout settle
     const timer = setTimeout(() => {
       const el = cardRefs.current[initialPhotoIndex];
-      const scrollEl = scrollRef.current;
-      if (el && scrollEl) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 300);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
     return () => clearTimeout(timer);
   }, [initialPhotoIndex]);
+
+  // Scroll to card from TOC when already on this panel
+  useEffect(() => {
+    if (!scrollToCard) return;
+    const timer = setTimeout(() => {
+      const el = cardRefs.current[scrollToCard.index];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [scrollToCard]);
 
   return (
     <div className="relative bg-[#0D0D1A] min-h-full" ref={setScrollParent}>

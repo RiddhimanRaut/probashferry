@@ -54,7 +54,10 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
   const totalPanels = articles.length + 2;
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
   const initialNavDone = useRef(false);
+  const [pendingPhoto, setPendingPhoto] = useState<number | undefined>(initialPhotoIndex);
+  const [scrollToCard, setScrollToCard] = useState<{ index: number; nonce: number } | null>(null);
 
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(0);
   const [showControls, setShowControls] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -89,6 +92,20 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
     }
     window.history.replaceState({}, "", "/");
   }, [initialArticleSlug, articles, goTo]);
+
+  // Clear pending photo after panel has consumed it; reset active card
+  useEffect(() => {
+    setActiveCardIndex(0);
+    const timer = setTimeout(() => setPendingPhoto(undefined), 600);
+    return () => clearTimeout(timer);
+  }, [currentIndex]);
+
+  // Clear scrollToCard after panel has scrolled
+  useEffect(() => {
+    if (!scrollToCard) return;
+    const timer = setTimeout(() => setScrollToCard(null), 600);
+    return () => clearTimeout(timer);
+  }, [scrollToCard]);
 
   const getScrollContainer = useCallback(
     () => document.querySelector<HTMLElement>("[data-scroll-container]"),
@@ -188,8 +205,17 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
     else resetHideTimer();
   }, [resetHideTimer]);
 
-  const handleArticleSelect = useCallback((index: number) => {
+  const handleArticleSelect = useCallback((index: number, photoIndex?: number) => {
     skipSplashRef.current = true;
+    if (photoIndex != null) {
+      if (index === currentIndexRef.current) {
+        // Same panel — trigger scroll without remount
+        setScrollToCard({ index: photoIndex, nonce: Date.now() });
+      } else {
+        // Different panel — set as state so it's captured in the render
+        setPendingPhoto(photoIndex);
+      }
+    }
     goTo(index);
   }, [goTo]);
 
@@ -373,24 +399,30 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               article={articles[currentIndex - 1]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
-              initialPhotoIndex={initialPhotoIndex}
+              initialPhotoIndex={pendingPhoto}
+              scrollToCard={scrollToCard}
               getControlsVisible={getControlsVisible}
+              onActiveCardChange={setActiveCardIndex}
             />
           ) : articles[currentIndex - 1].category === "Comics" ? (
             <ComicsGalleryPanel
               article={articles[currentIndex - 1]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
-              initialPhotoIndex={initialPhotoIndex}
+              initialPhotoIndex={pendingPhoto}
+              scrollToCard={scrollToCard}
               getControlsVisible={getControlsVisible}
+              onActiveCardChange={setActiveCardIndex}
             />
           ) : articles[currentIndex - 1].category === "Art" ? (
             <ArtGalleryPanel
               article={articles[currentIndex - 1]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
-              initialPhotoIndex={initialPhotoIndex}
+              initialPhotoIndex={pendingPhoto}
+              scrollToCard={scrollToCard}
               getControlsVisible={getControlsVisible}
+              onActiveCardChange={setActiveCardIndex}
             />
           ) : (
             <ArticlePanel
@@ -595,7 +627,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
         {shareCopied ? <Check size={18} /> : <Share2 size={18} />}
       </motion.button>
 
-      <TableOfContents articles={articles} currentIndex={currentIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
+      <TableOfContents articles={articles} currentIndex={currentIndex} activeCardIndex={activeCardIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
     </div>
   );
 }

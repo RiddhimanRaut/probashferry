@@ -15,6 +15,7 @@ import { useReadingProgress } from "@/hooks/useReadingProgress";
 import { useLike } from "@/hooks/useLike";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { formatDate } from "@/lib/utils";
+import { tagColor } from "@/lib/tags";
 
 /* ------------------------------------------------------------------ */
 /*  PhotoCard — a single photo with its own like / comment / share     */
@@ -109,10 +110,30 @@ function PhotoCard({ photo, index, articleSlug, articleTitle, articleAuthor, dou
 
       <div className="px-5 md:px-8 lg:px-16 mt-3">
         {(photo.title || photo.caption) && (
-          <p className="text-sm text-white/50 font-body leading-relaxed mb-3">
+          <p className="text-sm text-white/50 font-body leading-relaxed mb-1">
             {photo.title && <><span className="text-white/70 font-medium">{photo.title}</span>{artist && <>, <em className="text-white/60">{artist}</em></>}. </>}
             {photo.caption}
           </p>
+        )}
+        {(photo.flavor || photo.type) && (
+          <div className="flex items-center gap-1.5 mb-3">
+            {photo.flavor && (
+              <span
+                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{ color: tagColor(photo.flavor), backgroundColor: `${tagColor(photo.flavor)}15` }}
+              >
+                {photo.flavor}
+              </span>
+            )}
+            {photo.type && (
+              <span
+                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{ color: tagColor(photo.type), backgroundColor: `${tagColor(photo.type)}15` }}
+              >
+                {photo.type}
+              </span>
+            )}
+          </div>
         )}
 
         <div className="flex items-center gap-4 py-2 border-t border-white/10">
@@ -152,10 +173,12 @@ interface PhotoGalleryPanelProps {
   isActive: boolean;
   doubleTapEvent: { x: number; y: number; id: number } | null;
   initialPhotoIndex?: number;
+  scrollToCard?: { index: number; nonce: number } | null;
   getControlsVisible?: () => boolean;
+  onActiveCardChange?: (index: number) => void;
 }
 
-export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex, getControlsVisible }: PhotoGalleryPanelProps) {
+export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, initialPhotoIndex, scrollToCard, getControlsVisible, onActiveCardChange }: PhotoGalleryPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const progress = useReadingProgress(scrollRef);
   const initialScrollDone = useRef(false);
@@ -166,6 +189,27 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, i
       if (parent) (scrollRef as React.MutableRefObject<HTMLElement | null>).current = parent;
     }
   }, []);
+
+  // Track which card is most visible via IntersectionObserver
+  useEffect(() => {
+    const refs = cardRefs.current;
+    if (!refs.length || !onActiveCardChange) return;
+    const ratios = new Map<number, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const idx = refs.indexOf(entry.target as HTMLDivElement);
+          if (idx !== -1) ratios.set(idx, entry.intersectionRatio);
+        }
+        let best = -1, bestRatio = 0;
+        ratios.forEach((r, i) => { if (r > bestRatio) { best = i; bestRatio = r; } });
+        if (best !== -1) onActiveCardChange(best);
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    for (const el of refs) { if (el) observer.observe(el); }
+    return () => observer.disconnect();
+  }, [onActiveCardChange, article.photos]);
 
   const photos = article.photos || [];
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -194,20 +238,27 @@ export default function PhotoGalleryPanel({ article, isActive, doubleTapEvent, i
     }
   }, [doubleTapEvent]);
 
-  // Scroll to specific photo when arriving via shared link
+  // Scroll to specific photo when arriving via shared link or TOC (on mount)
   useEffect(() => {
     if (initialPhotoIndex == null || initialScrollDone.current) return;
     initialScrollDone.current = true;
-    // Delay to let the DOM render and scroll container attach
+    // 500ms delay: wait for panel slide animation (200ms) + layout settle
     const timer = setTimeout(() => {
       const el = cardRefs.current[initialPhotoIndex];
-      const scrollEl = scrollRef.current;
-      if (el && scrollEl) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 300);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
     return () => clearTimeout(timer);
   }, [initialPhotoIndex]);
+
+  // Scroll to card from TOC when already on this panel
+  useEffect(() => {
+    if (!scrollToCard) return;
+    const timer = setTimeout(() => {
+      const el = cardRefs.current[scrollToCard.index];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [scrollToCard]);
 
   return (
     <div className="relative bg-charcoal min-h-full" ref={setScrollParent}>

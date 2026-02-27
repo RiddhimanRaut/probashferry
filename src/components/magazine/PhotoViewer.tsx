@@ -11,14 +11,22 @@ interface PhotoViewerProps {
   author?: string;
   onClose: () => void;
   scrollable?: boolean;
+  images?: string[];
+  initialIndex?: number;
+  onIndexChange?: (index: number) => void;
 }
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 
-export default function PhotoViewer({ src, caption, title, author, onClose, scrollable }: PhotoViewerProps) {
+export default function PhotoViewer({ src, caption, title, author, onClose, scrollable, images, initialIndex, onIndexChange }: PhotoViewerProps) {
   const [landscape, setLandscape] = useState(false);
   const [showCaption, setShowCaption] = useState(false);
+
+  // Multi-image navigation
+  const hasImages = !!(images && images.length > 1);
+  const [imageIndex, setImageIndex] = useState(initialIndex ?? 0);
+  const displaySrc = hasImages ? images![imageIndex] : src;
 
   // Zoom & pan state
   const [scale, setScale] = useState(1);
@@ -34,16 +42,31 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
   const isPanning = useRef(false);
   const lastTapTime = useRef(0);
   const hasPannedOrZoomed = useRef(false);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
   // Refs so touch handlers always see current values without re-binding
   const landscapeRef = useRef(landscape);
   landscapeRef.current = landscape;
   const scrollableRef = useRef(!!scrollable);
   scrollableRef.current = !!scrollable;
+  const hasImagesRef = useRef(hasImages);
+  hasImagesRef.current = hasImages;
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+  const imageIndexRef = useRef(imageIndex);
+  imageIndexRef.current = imageIndex;
   const imgNaturalSize = useRef({ w: 0, h: 0 });
   const imgElRef = useRef<HTMLImageElement>(null);
 
   const zoomed = scale > 1.05;
+
+  // Reset zoom when changing images
+  useEffect(() => {
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+    imgNaturalSize.current = { w: 0, h: 0 };
+    onIndexChange?.(imageIndex);
+  }, [imageIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset scroll position when zooming in (transform pan takes over)
   useEffect(() => {
@@ -122,7 +145,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
     };
   }, [landscape]);
 
-  // Close on Escape key
+  // Keyboard: Escape to close/reset, arrow keys for image navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -131,11 +154,17 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
         } else {
           onClose();
         }
+      } else if (hasImages && !zoomed) {
+        if (e.key === "ArrowRight") {
+          setImageIndex((i) => Math.min(images!.length - 1, i + 1));
+        } else if (e.key === "ArrowLeft") {
+          setImageIndex((i) => Math.max(0, i - 1));
+        }
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose, zoomed, resetZoom]);
+  }, [onClose, zoomed, resetZoom, hasImages, images]);
 
   // Scroll-wheel zoom (desktop)
   useEffect(() => {
@@ -178,6 +207,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
 
     const handleTouchStart = (e: TouchEvent) => {
       hasPannedOrZoomed.current = false;
+      swipeStart.current = null;
 
       if (e.touches.length === 2) {
         // Pinch start
@@ -189,6 +219,9 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
         isPanning.current = true;
         panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         translateStart.current = { ...translate };
+      } else if (e.touches.length === 1 && hasImagesRef.current && !canPan()) {
+        // Track potential swipe for multi-image navigation
+        swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     };
 
@@ -231,6 +264,21 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
     const handleTouchEnd = (e: TouchEvent) => {
       if (e.touches.length === 0) {
         isPanning.current = false;
+
+        // Check for horizontal swipe to navigate images
+        if (swipeStart.current && hasImagesRef.current && !canPan()) {
+          const touch = e.changedTouches[0];
+          const dx = touch.clientX - swipeStart.current.x;
+          const dy = touch.clientY - swipeStart.current.y;
+          if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            hasPannedOrZoomed.current = true; // suppress the click/tap handler
+            const imgs = imagesRef.current!;
+            const idx = imageIndexRef.current;
+            if (dx < 0 && idx < imgs.length - 1) setImageIndex(idx + 1);
+            else if (dx > 0 && idx > 0) setImageIndex(idx - 1);
+          }
+          swipeStart.current = null;
+        }
       }
       // If down to 1 finger during pinch, start pan from that finger
       if (e.touches.length === 1 && canPan()) {
@@ -333,7 +381,7 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
         >
           <img
             ref={imgElRef}
-            src={src}
+            src={displaySrc}
             alt={caption}
             className={scrollable ? "w-full" : "w-full h-full object-cover"}
             style={scrollable ? { margin: "auto 0" } : undefined}
@@ -359,6 +407,31 @@ export default function PhotoViewer({ src, caption, title, author, onClose, scro
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Multi-image dot indicators */}
+      {hasImages && !zoomed && (
+        <div
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[71] flex items-center gap-2.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {images!.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setImageIndex(i)}
+              className="p-1"
+              aria-label={`Panel ${i + 1}`}
+            >
+              <div
+                className="w-2.5 h-2.5 rounded-full transition-all duration-200"
+                style={{
+                  backgroundColor: i === imageIndex ? "#D4A843" : "rgba(255,255,255,0.3)",
+                  transform: i === imageIndex ? "scale(1.3)" : "scale(1)",
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Controls — visible on tap (with caption), hidden when zoomed */}
       <AnimatePresence>

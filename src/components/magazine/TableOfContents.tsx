@@ -19,33 +19,47 @@ export const SECTION_ICONS: Record<string, typeof PenLine> = {
 interface TableOfContentsProps {
   articles: ArticleMeta[];
   currentIndex: number;
-  onSelect: (index: number) => void;
+  activeCardIndex?: number;
+  onSelect: (index: number, photoIndex?: number) => void;
   onSectionSelect?: (section: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   visible: boolean;
 }
 
-export default function TableOfContents({ articles, currentIndex, onSelect, onSectionSelect, open, onOpenChange, visible }: TableOfContentsProps) {
+export default function TableOfContents({ articles, currentIndex, activeCardIndex, onSelect, onSectionSelect, open, onOpenChange, visible }: TableOfContentsProps) {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
-  // Fetch like counts when TOC opens
+  const GALLERY_SECTIONS = ["Photography", "Comics", "Art"];
+
+  // Fetch like counts when TOC opens — article-level for essays, per-photo for galleries
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     (async () => {
       const counts: Record<string, number> = {};
-      await Promise.all(
-        articles.map(async (a) => {
-          try {
-            const data = await getDoc(`articles/${a.slug}`);
-            counts[a.slug] = (data?.likeCount as number) || 0;
-          } catch {
-            counts[a.slug] = 0;
+      const fetches: Promise<void>[] = [];
+      for (const a of articles) {
+        if (GALLERY_SECTIONS.includes(a.category) && a.photos && a.photos.length > 0) {
+          // Fetch per-photo like counts
+          for (let i = 0; i < a.photos.length; i++) {
+            const id = `${a.slug}-photo-${i}`;
+            fetches.push(
+              getDoc(`articles/${id}`)
+                .then((data) => { counts[id] = (data?.likeCount as number) || 0; })
+                .catch(() => { counts[id] = 0; })
+            );
           }
-        })
-      );
+        } else {
+          fetches.push(
+            getDoc(`articles/${a.slug}`)
+              .then((data) => { counts[a.slug] = (data?.likeCount as number) || 0; })
+              .catch(() => { counts[a.slug] = 0; })
+          );
+        }
+      }
+      await Promise.all(fetches);
       if (!cancelled) setLikeCounts(counts);
     })();
     return () => { cancelled = true; };
@@ -64,10 +78,10 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
     groupedArticles[cat].push(article);
   }
 
-  const handleSelectArticle = (article: ArticleMeta) => {
+  const handleSelectArticle = (article: ArticleMeta, photoIndex?: number) => {
     const index = articles.findIndex((a) => a.slug === article.slug);
     if (index !== -1) {
-      onSelect(index + 1);
+      onSelect(index + 1, photoIndex);
       onOpenChange(false);
     }
   };
@@ -127,7 +141,6 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                     const sectionArticles = groupedArticles[section] || [];
                     const hasArticles = sectionArticles.length > 0;
                     const isExpanded = expandedSection === section;
-
                     return (
                       <div key={section}>
                         {/* Section row */}
@@ -147,7 +160,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                               </span>
                             )}
                           </button>
-                          {hasArticles && section !== "Photography" && section !== "Comics" && section !== "Art" && (
+                          {hasArticles && (
                             <button
                               onClick={() => toggleSection(section)}
                               className="p-3 rounded-lg hover:bg-charcoal/5 text-charcoal/50 transition-colors"
@@ -158,7 +171,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                           )}
                         </div>
 
-                        {/* Expanded article list */}
+                        {/* Expanded list — per-photo for galleries, per-article for essays */}
                         <AnimatePresence>
                           {isExpanded && hasArticles && (
                             <motion.div
@@ -169,11 +182,58 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                               className="overflow-hidden"
                             >
                               <div className="pl-8 space-y-1 pb-1">
-                                {sectionArticles.map((article) => {
+                                {sectionArticles.flatMap((article) => {
                                   const articleIndex = articles.findIndex((a) => a.slug === article.slug);
-                                  const isActive = articleIndex + 1 === currentIndex;
+                                  const isGallery = GALLERY_SECTIONS.includes(section);
+                                  const isOnPanel = articleIndex + 1 === currentIndex;
+                                  const isActive = !isGallery && isOnPanel;
+
+                                  if (isGallery && article.photos && article.photos.length > 0) {
+                                    return article.photos.map((photo, pi) => {
+                                      const photoId = `${article.slug}-photo-${pi}`;
+                                      const count = likeCounts[photoId] || 0;
+                                      const isCardActive = isOnPanel && activeCardIndex === pi;
+                                      return (
+                                        <button
+                                          key={photoId}
+                                          onClick={() => handleSelectArticle(article, pi)}
+                                          className={`w-full text-left p-2.5 rounded-lg transition-colors ${
+                                            isCardActive ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
+                                          }`}
+                                        >
+                                          <p className="font-medium text-sm">{photo.title || `#${pi + 1}`}</p>
+                                          <div className="flex items-center gap-1.5 mt-0.5">
+                                            {photo.flavor && (
+                                              <span
+                                                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                                style={{ color: tagColor(photo.flavor), backgroundColor: `${tagColor(photo.flavor)}15` }}
+                                              >
+                                                {photo.flavor}
+                                              </span>
+                                            )}
+                                            {photo.type && (
+                                              <span
+                                                className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                                style={{ color: tagColor(photo.type), backgroundColor: `${tagColor(photo.type)}15` }}
+                                              >
+                                                {photo.type}
+                                              </span>
+                                            )}
+                                            {count > 0 && (
+                                              <span className="flex items-center gap-0.5 text-xs ml-auto">
+                                                <Heart size={10} className="fill-sindoor text-sindoor" />
+                                                <span className="text-sindoor/70 tabular-nums">{count}</span>
+                                              </span>
+                                            )}
+                                          </div>
+                                        </button>
+                                      );
+                                    });
+                                  }
+
+                                  // Essay / non-gallery articles
                                   const count = likeCounts[article.slug] || 0;
-                                  return (
+                                  return [(
                                     <button
                                       key={article.slug}
                                       onClick={() => handleSelectArticle(article)}
@@ -207,7 +267,7 @@ export default function TableOfContents({ articles, currentIndex, onSelect, onSe
                                         )}
                                       </div>
                                     </button>
-                                  );
+                                  )];
                                 })}
                               </div>
                             </motion.div>
