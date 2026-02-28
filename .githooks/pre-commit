@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Auto-compress any staged JPEG images before committing.
+# Only compresses if savings >5% — skips already-optimal images.
+# Re-stages compressed files so the commit contains the smaller versions.
+
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM \
+  | grep -E '^public/images/.*\.(jpg|jpeg)$' || true)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+if ! command -v ffmpeg &>/dev/null; then
+  echo "⚠️  ffmpeg not found — skipping image compression (brew install ffmpeg)"
+  exit 0
+fi
+
+echo "🖼  Checking staged images..."
+
+count=0
+saved=0
+
+for rel in $STAGED; do
+  f="$ROOT/$rel"
+  before=$(wc -c < "$f" | tr -d '[:space:]')
+  tmp="${f}.tmp.jpg"
+
+  if ! ffmpeg -y -i "$f" -q:v 4 "$tmp" -loglevel quiet 2>/dev/null; then
+    rm -f "$tmp"
+    continue
+  fi
+
+  after=$(wc -c < "$tmp" | tr -d '[:space:]')
+  diff=$(( before - after ))
+  pct=$(( diff * 100 / before ))
+
+  if [ "$pct" -ge 5 ]; then
+    mv "$tmp" "$f"
+    git add "$f"
+    saved=$(( saved + diff ))
+    count=$(( count + 1 ))
+    printf "  ✓ %-50s %dK → %dK\n" "$rel" $(( before / 1024 )) $(( after / 1024 ))
+  else
+    rm -f "$tmp"
+  fi
+done
+
+if [ "$count" -gt 0 ]; then
+  echo "  Saved $(( saved / 1024 ))KB total"
+fi

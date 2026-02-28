@@ -10,7 +10,9 @@
     "test:e2e": "npx playwright test",
     "test:e2e:mobile": "npx playwright test --project='iPhone 14' --project='Pixel 7'",
     "test:e2e:desktop": "npx playwright test --project='Desktop Chrome'",
-    "test:e2e:ui": "npx playwright test --ui"
+    "test:e2e:ui": "npx playwright test --ui",
+    "images": "bash scripts/compress-images.sh",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",

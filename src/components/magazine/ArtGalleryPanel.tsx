@@ -310,6 +310,7 @@ export default function ArtGalleryPanel({ article, isActive, doubleTapEvent, ini
           src={article.coverImage}
           alt={article.title}
           className="w-full h-full object-cover"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/20 to-[#0A0A0A]" />
         <div className="absolute bottom-0 left-0 right-0 px-5 md:px-8 pb-8">

@@ -54,9 +54,9 @@ function ComicCarousel({ panels, alt, currentPanel, onPanelChange, onPanelTap }:
   useEffect(() => {
     if (!containerWidth) return;
     fmAnimate(x, -currentPanel * containerWidth, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
+      type: "tween",
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
     });
   }, [currentPanel, containerWidth, x]);
 
@@ -72,7 +72,8 @@ function ComicCarousel({ panels, alt, currentPanel, onPanelChange, onPanelTap }:
         className="flex cursor-grab active:cursor-grabbing"
         style={{ x, width: containerWidth * totalSlides || "100%" }}
         drag="x"
-        dragElastic={0.15}
+        dragConstraints={{ left: containerWidth ? -(totalSlides - 1) * containerWidth : 0, right: 0 }}
+        dragElastic={0.05}
         dragMomentum={false}
         onDragStart={() => {
           panelAtDragStart.current = currentPanel;
@@ -487,6 +488,7 @@ export default function ComicsGalleryPanel({ article, isActive, doubleTapEvent, 
           src={article.coverImage}
           alt={article.title}
           className="w-full h-full object-cover"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0D0D1A]/20 to-[#0D0D1A]" />
         <div className="absolute bottom-0 left-0 right-0 px-5 md:px-8 pb-8">

@@ -61,6 +61,7 @@ export default function ArticlePanel({ article, isActive, doubleTapEvent }: Arti
           src={article.coverImage}
           alt={article.title}
           className="w-full h-full object-cover"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-paper" />
       </div>

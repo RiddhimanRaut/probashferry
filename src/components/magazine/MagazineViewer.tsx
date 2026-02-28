@@ -32,15 +32,12 @@ interface HeartBurst {
 const panelVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? "100%" : "-100%",
-    opacity: 0,
   }),
   center: {
     x: 0,
-    opacity: 1,
   },
   exit: (direction: number) => ({
     x: direction > 0 ? "-100%" : "100%",
-    opacity: 0,
   }),
 };
 
@@ -386,8 +383,7 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "tween", duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
-            opacity: { duration: 0.15 },
+            x: { type: "tween", duration: 0.3, ease: [0.22, 1, 0.36, 1] },
           }}
           data-scroll-container
           onScroll={handleScroll}
@@ -519,7 +515,7 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
               animate={{ x: 0 }}
               exit={{ opacity: 0 }}
               transition={{
-                x: { type: "tween", duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
+                x: { type: "tween", duration: 0.3, ease: [0.22, 1, 0.36, 1] },
                 opacity: { duration: 0.5 },
               }}
               className="fixed inset-0 z-[60] bg-charcoal flex items-center justify-center pointer-events-none"
