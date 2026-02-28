@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { List, X, Heart, Users, ChevronRight, ChevronDown, PenLine, Camera, BookImage, Palette } from "lucide-react";
+import { List, X, Heart, Users, ChevronRight, ChevronDown, PenLine, Camera, BookImage, Palette, Mail } from "lucide-react";
 import { ArticleMeta } from "@/types/article";
 import { tagColor } from "@/lib/tags";
 import { getDoc } from "@/lib/firebase/firestore-rest";
@@ -18,6 +18,8 @@ export const SECTION_ICONS: Record<string, typeof PenLine> = {
 
 interface TableOfContentsProps {
   articles: ArticleMeta[];
+  editorial?: ArticleMeta | null;
+  articleOffset: number;
   currentIndex: number;
   activeCardIndex?: number;
   onSelect: (index: number, photoIndex?: number) => void;
@@ -27,7 +29,7 @@ interface TableOfContentsProps {
   visible: boolean;
 }
 
-export default function TableOfContents({ articles, currentIndex, activeCardIndex, onSelect, onSectionSelect, open, onOpenChange, visible }: TableOfContentsProps) {
+export default function TableOfContents({ articles, editorial, articleOffset, currentIndex, activeCardIndex, onSelect, onSectionSelect, open, onOpenChange, visible }: TableOfContentsProps) {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
@@ -81,7 +83,7 @@ export default function TableOfContents({ articles, currentIndex, activeCardInde
   const handleSelectArticle = (article: ArticleMeta, photoIndex?: number) => {
     const index = articles.findIndex((a) => a.slug === article.slug);
     if (index !== -1) {
-      onSelect(index + 1, photoIndex);
+      onSelect(index + articleOffset, photoIndex);
       onOpenChange(false);
     }
   };
@@ -135,6 +137,24 @@ export default function TableOfContents({ articles, currentIndex, activeCardInde
               <div className="p-6">
                 <div className="w-10 h-1 bg-charcoal/10 rounded-full mx-auto mb-6" />
                 <h2 className="heading-display text-xl mb-4 text-charcoal">In This Issue</h2>
+
+                {editorial && (
+                  <div className="border-b border-charcoal/10 mb-3 pb-3">
+                    <button
+                      onClick={() => { onSelect(1); onOpenChange(false); }}
+                      className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 ${
+                        currentIndex === 1 ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
+                      }`}
+                    >
+                      <Mail size={16} className="opacity-50 shrink-0" />
+                      <div>
+                        <p className="font-medium text-sm">{editorial.title}</p>
+                        <span className="text-xs text-charcoal/40">A letter from the editors</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   {SECTIONS.map((section) => {
                     const Icon = SECTION_ICONS[section];
@@ -185,7 +205,7 @@ export default function TableOfContents({ articles, currentIndex, activeCardInde
                                 {sectionArticles.flatMap((article) => {
                                   const articleIndex = articles.findIndex((a) => a.slug === article.slug);
                                   const isGallery = GALLERY_SECTIONS.includes(section);
-                                  const isOnPanel = articleIndex + 1 === currentIndex;
+                                  const isOnPanel = articleIndex + articleOffset === currentIndex;
                                   const isActive = !isGallery && isOnPanel;
 
                                   if (isGallery && article.photos && article.photos.length > 0) {
@@ -281,9 +301,9 @@ export default function TableOfContents({ articles, currentIndex, activeCardInde
                 {/* Meet The Team */}
                 <div className="border-t border-charcoal/10 mt-3 pt-3">
                   <button
-                    onClick={() => { onSelect(articles.length + 1); onOpenChange(false); }}
+                    onClick={() => { onSelect(articles.length + articleOffset); onOpenChange(false); }}
                     className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 ${
-                      currentIndex === articles.length + 1 ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
+                      currentIndex === articles.length + articleOffset ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
                     }`}
                     data-testid="toc-team-entry"
                   >

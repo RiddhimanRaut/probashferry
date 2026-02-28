@@ -20,14 +20,16 @@ test.describe("Swipe navigation", () => {
     await expect(page.locator("h1", { hasText: "Probashferry" })).not.toBeVisible();
   });
 
-  test("swipe right from article navigates back to cover", async ({ magazinePage: page }) => {
+  test("swipe right from article navigates back to editorial", async ({ magazinePage: page }) => {
     await goToFirstArticle(page);
     await expect(page.locator(".prose")).toBeVisible();
 
     await swipeRight(page);
     await page.waitForTimeout(500);
 
-    await expect(page.locator("h1", { hasText: "Probashferry" })).toBeVisible({ timeout: 5000 });
+    // Should land on editorial (still has .prose), not cover
+    await expect(page.locator(".prose")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("h2", { hasText: "Letter from the Editors" })).toBeVisible({ timeout: 5000 });
   });
 
   test("cannot swipe past last panel (team page)", async ({ magazinePage: page }) => {

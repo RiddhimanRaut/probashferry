@@ -15,24 +15,34 @@ const CATEGORY_ORDER: Record<string, number> = {
   Art: 3,
 };
 
-export async function getAllArticles(lang: string = "en"): Promise<Article[]> {
+export async function getContent(lang: string = "en"): Promise<{ editorial: Article | null; articles: Article[] }> {
   const dir = path.join(articlesDirectory, lang);
-  if (!fs.existsSync(dir)) return [];
+  if (!fs.existsSync(dir)) return { editorial: null, articles: [] };
 
   const filenames = fs.readdirSync(dir).filter((f) => f.endsWith(".mdx"));
 
-  const articles = await Promise.all(
+  const all = await Promise.all(
     filenames.map(async (filename) => {
       const slug = filename.replace(/\.mdx$/, "");
       return getArticleBySlug(slug, lang);
     })
   );
 
-  return articles.sort((a, b) => {
-    const catDiff = (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99);
-    if (catDiff !== 0) return catDiff;
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  const editorial = all.find((a) => a.category === "Editorial") ?? null;
+  const articles = all
+    .filter((a) => a.category !== "Editorial")
+    .sort((a, b) => {
+      const catDiff = (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99);
+      if (catDiff !== 0) return catDiff;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+
+  return { editorial, articles };
+}
+
+export async function getAllArticles(lang: string = "en"): Promise<Article[]> {
+  const { articles } = await getContent(lang);
+  return articles;
 }
 
 export async function getArticleBySlug(slug: string, lang: string = "en"): Promise<Article> {

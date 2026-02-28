@@ -1,4 +1,4 @@
-import { getAllArticles } from "@/lib/articles";
+import { getContent } from "@/lib/articles";
 import MagazineViewer from "@/components/magazine/MagazineViewer";
 
 interface Props {
@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default async function Home({ searchParams }: Props) {
-  const articles = await getAllArticles("en");
+  const { editorial, articles } = await getContent("en");
   const { article, photo } = await searchParams;
   const photoIndex = photo != null ? parseInt(photo, 10) : undefined;
 
@@ -14,6 +14,7 @@ export default async function Home({ searchParams }: Props) {
     <main>
       <MagazineViewer
         articles={articles}
+        editorial={editorial}
         initialArticleSlug={article}
         initialPhotoIndex={photoIndex}
       />

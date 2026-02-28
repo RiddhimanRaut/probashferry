@@ -46,12 +46,15 @@ const panelVariants = {
 
 interface MagazineViewerProps {
   articles: Article[];
+  editorial?: Article | null;
   initialArticleSlug?: string;
   initialPhotoIndex?: number;
 }
 
-export default function MagazineViewer({ articles, initialArticleSlug, initialPhotoIndex }: MagazineViewerProps) {
-  const totalPanels = articles.length + 2;
+export default function MagazineViewer({ articles, editorial, initialArticleSlug, initialPhotoIndex }: MagazineViewerProps) {
+  const hasEditorial = !!editorial;
+  const articleOffset = hasEditorial ? 2 : 1;
+  const totalPanels = articles.length + articleOffset + 1; // +1 for team panel
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
   const initialNavDone = useRef(false);
   const [pendingPhoto, setPendingPhoto] = useState<number | undefined>(initialPhotoIndex);
@@ -88,10 +91,10 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
     const idx = articles.findIndex((a) => a.slug === initialArticleSlug);
     if (idx !== -1) {
       skipSplashRef.current = true;
-      goTo(idx + 1);
+      goTo(idx + articleOffset);
     }
     window.history.replaceState({}, "", "/");
-  }, [initialArticleSlug, articles, goTo]);
+  }, [initialArticleSlug, articles, articleOffset, goTo]);
 
   // Clear pending photo after panel has consumed it; reset active card
   useEffect(() => {
@@ -185,8 +188,8 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
 
   // Show section splash when swiping into a new category
   useLayoutEffect(() => {
-    const isArticle = currentIndex >= 1 && currentIndex <= articles.length;
-    const currentCategory = isArticle ? articles[currentIndex - 1].category : null;
+    const isArticle = currentIndex >= articleOffset && currentIndex < articleOffset + articles.length;
+    const currentCategory = isArticle ? articles[currentIndex - articleOffset].category : null;
 
     if (skipSplashRef.current) {
       skipSplashRef.current = false;
@@ -197,7 +200,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
 
     prevCategoryRef.current = currentCategory;
     hasNavigatedRef.current = true;
-  }, [currentIndex, articles, sectionSplash, direction]);
+  }, [currentIndex, articles, articleOffset, sectionSplash, direction]);
 
   const handleTocOpenChange = useCallback((open: boolean) => {
     setTocOpen(open);
@@ -221,10 +224,10 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
 
   const handleSectionSelect = useCallback((section: string) => {
     const idx = articles.findIndex(a => a.category === section);
-    if (idx !== -1) goTo(idx + 1);
+    if (idx !== -1) goTo(idx + articleOffset);
     setSectionSplash({ section, dir: 1 });
     setTimeout(() => setSectionSplash(null), 1500);
-  }, [articles, goTo]);
+  }, [articles, articleOffset, goTo]);
 
   const handleMagazineShare = useCallback(async () => {
     const url = "https://probashferry.vercel.app";
@@ -394,9 +397,15 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
             <CoverPanel />
           ) : onTeam ? (
             <TeamPanel />
-          ) : articles[currentIndex - 1].category === "Photography" ? (
+          ) : hasEditorial && currentIndex === 1 ? (
+            <ArticlePanel
+              article={editorial!}
+              isActive={true}
+              doubleTapEvent={doubleTapEvent}
+            />
+          ) : articles[currentIndex - articleOffset].category === "Photography" ? (
             <PhotoGalleryPanel
-              article={articles[currentIndex - 1]}
+              article={articles[currentIndex - articleOffset]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
               initialPhotoIndex={pendingPhoto}
@@ -404,9 +413,9 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               getControlsVisible={getControlsVisible}
               onActiveCardChange={setActiveCardIndex}
             />
-          ) : articles[currentIndex - 1].category === "Comics" ? (
+          ) : articles[currentIndex - articleOffset].category === "Comics" ? (
             <ComicsGalleryPanel
-              article={articles[currentIndex - 1]}
+              article={articles[currentIndex - articleOffset]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
               initialPhotoIndex={pendingPhoto}
@@ -414,9 +423,9 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               getControlsVisible={getControlsVisible}
               onActiveCardChange={setActiveCardIndex}
             />
-          ) : articles[currentIndex - 1].category === "Art" ? (
+          ) : articles[currentIndex - articleOffset].category === "Art" ? (
             <ArtGalleryPanel
-              article={articles[currentIndex - 1]}
+              article={articles[currentIndex - articleOffset]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
               initialPhotoIndex={pendingPhoto}
@@ -426,7 +435,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
             />
           ) : (
             <ArticlePanel
-              article={articles[currentIndex - 1]}
+              article={articles[currentIndex - articleOffset]}
               isActive={true}
               doubleTapEvent={doubleTapEvent}
             />
@@ -600,7 +609,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
               </button>
 
               <span className="text-xs tracking-widest tabular-nums text-charcoal/50">
-                {currentIndex} / {articles.length}
+                {currentIndex} / {articles.length + (hasEditorial ? 1 : 0)}
               </span>
 
               <button
@@ -627,7 +636,7 @@ export default function MagazineViewer({ articles, initialArticleSlug, initialPh
         {shareCopied ? <Check size={18} /> : <Share2 size={18} />}
       </motion.button>
 
-      <TableOfContents articles={articles} currentIndex={currentIndex} activeCardIndex={activeCardIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
+      <TableOfContents articles={articles} editorial={editorial} articleOffset={articleOffset} currentIndex={currentIndex} activeCardIndex={activeCardIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
     </div>
   );
 }

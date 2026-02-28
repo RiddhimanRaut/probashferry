@@ -140,9 +140,13 @@ export async function swipeRight(page: Page) {
  * useSwipe hook) and reloading. This is the most reliable cross-browser way
  * to get past the cover without depending on touch event dispatch.
  */
+/**
+ * Navigate to the first regular article (past cover + editorial).
+ * Panel index 2: cover=0, editorial=1, first article=2.
+ */
 export async function goToFirstArticle(page: Page) {
   await page.evaluate(() =>
-    sessionStorage.setItem("probashferry-panel", "1")
+    sessionStorage.setItem("probashferry-panel", "2")
   );
   await page.reload();
   await page.waitForSelector(".prose", { timeout: 10000 });
