@@ -9,6 +9,7 @@ import { useAuthContext } from "@/providers/AuthProvider";
 /* ------------------------------------------------------------------ */
 
 type Category = "Essays" | "Photography" | "Art" | "Comics";
+type ComicType = "single" | "multi";
 
 interface PhotoEntry {
   file: File | null;
@@ -19,47 +20,51 @@ interface PhotoEntry {
 }
 
 const CATEGORIES: Category[] = ["Essays", "Photography", "Art", "Comics"];
-
 const FLAVOR_TAGS = ["Culture", "Faith", "Travel", "Food", "Identity", "Memory", "Belonging"];
 const TYPE_TAGS = ["Prose", "Poem", "Memoir", "Essay", "Fiction"];
 
-const CATEGORY_HINT: Record<Category, string> = {
-  Essays: "JPEG or PNG, optional",
-  Photography: "JPEG only, shown as the series hero",
-  Art: "JPEG or PNG, shown as the series hero",
-  Comics: "JPEG or PNG, shown as the series hero",
+const FORMAT_HINTS: Record<Category, string[]> = {
+  Essays: [
+    "Submit as .docx (Word file).",
+    "Bengali text must be typed Unicode — not a scan or image of text.",
+    "One submission per issue.",
+  ],
+  Photography: [
+    "JPEG only. Minimum 1500px on the longest side.",
+    "sRGB colour space. No RAW or HEIC files.",
+    "Submit up to 3 photos. We select one for publication.",
+    "One submission per issue.",
+  ],
+  Art: [
+    "JPEG or PNG. Minimum 1500px on the longest side.",
+    "RGB colour mode — not CMYK.",
+    "Submit up to 3 works. We select one for publication.",
+    "One submission per issue.",
+  ],
+  Comics: [
+    "Single-panel: one JPEG or PNG.",
+    "Multi-panel: one image file per panel, numbered in order. All panels must share the same aspect ratio.",
+    "Minimum 1200px wide per panel.",
+    "One submission per issue.",
+  ],
 };
 
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
-function TagPicker({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
+function TagPicker({ label, options, value, onChange }: {
+  label: string; options: string[]; value: string; onChange: (v: string) => void;
 }) {
   return (
     <div className="space-y-1.5">
       <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(value === opt ? "" : opt)}
+          <button key={opt} type="button" onClick={() => onChange(value === opt ? "" : opt)}
             className={`px-3 py-1 rounded-full text-xs font-body border transition-colors ${
-              value === opt
-                ? "bg-charcoal text-paper border-charcoal"
-                : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
-            }`}
-          >
+              value === opt ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+            }`}>
             {opt}
           </button>
         ))}
@@ -68,87 +73,41 @@ function TagPicker({
   );
 }
 
-function FileButton({
-  label,
-  accept,
-  hint,
-  multiple,
-  onChange,
-  files,
-}: {
-  label: string;
-  accept: string;
-  hint?: string;
-  multiple?: boolean;
-  onChange: (files: File[]) => void;
-  files: File[];
+function FileButton({ label, accept, hint, multiple, onChange, files, required }: {
+  label: string; accept: string; hint?: string; multiple?: boolean;
+  onChange: (files: File[]) => void; files: File[]; required?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-1.5">
-      <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">{label}</label>
+      <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">
+        {label}{required && <span className="text-sindoor ml-0.5">*</span>}
+      </label>
       {hint && <p className="font-body text-[11px] text-charcoal/40">{hint}</p>}
-      <button
-        type="button"
-        onClick={() => ref.current?.click()}
-        className="w-full border border-dashed border-charcoal/25 rounded-lg py-3 px-4 text-sm font-body text-charcoal/50 hover:border-charcoal/40 hover:text-charcoal/70 transition-colors text-left"
-      >
-        {files.length > 0
-          ? files.map((f) => f.name).join(", ")
-          : "Tap to choose file"}
+      <button type="button" onClick={() => ref.current?.click()}
+        className="w-full border border-dashed border-charcoal/25 rounded-lg py-3 px-4 text-sm font-body text-charcoal/50 hover:border-charcoal/40 hover:text-charcoal/70 transition-colors text-left">
+        {files.length > 0 ? files.map((f) => f.name).join(", ") : "Tap to choose file"}
       </button>
-      <input
-        ref={ref}
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        className="hidden"
-        onChange={(e) => onChange(Array.from(e.target.files ?? []))}
-      />
+      <input ref={ref} type="file" accept={accept} multiple={multiple} className="hidden"
+        onChange={(e) => onChange(Array.from(e.target.files ?? []))} />
     </div>
   );
 }
 
-function TextField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  multiline,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  multiline?: boolean;
-  required?: boolean;
+function TextField({ label, value, onChange, placeholder, multiline, required }: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; multiline?: boolean; required?: boolean;
 }) {
-  const base =
-    "w-full bg-transparent border-b border-charcoal/20 py-2 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors";
+  const base = "w-full bg-transparent border-b border-charcoal/20 py-2 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors";
   return (
     <div className="space-y-1.5">
       <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">
-        {label}
-        {required && <span className="text-sindoor ml-0.5">*</span>}
+        {label}{required && <span className="text-sindoor ml-0.5">*</span>}
       </label>
-      {multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className={`${base} resize-none`}
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={base}
-        />
-      )}
+      {multiline
+        ? <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={3} className={`${base} resize-none`} />
+        : <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={base} />
+      }
     </div>
   );
 }
@@ -174,15 +133,24 @@ export default function SubmitPanel() {
   const [photos, setPhotos] = useState<PhotoEntry[]>([
     { file: null, caption: "", title: "", medium: "", panels: [] },
   ]);
+  const [comicType, setComicType] = useState<ComicType>("single");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const author = user?.displayName ?? "";
 
+  const photoLimit = category === "Comics" ? 1 : 3;
+
   const isFormValid = (() => {
     if (!title.trim() || !excerpt.trim()) return false;
     if (category === "Essays") return manuscript.length > 0;
-    return cover.length > 0 && photos.some((p) => p.file !== null);
+    if (category === "Comics") {
+      const first = photos[0];
+      if (!first?.file) return false;
+      if (comicType === "multi") return first.panels.length > 0;
+      return true;
+    }
+    return photos.some((p) => p.file !== null);
   })();
 
   function updatePhoto(index: number, patch: Partial<PhotoEntry>) {
@@ -190,6 +158,7 @@ export default function SubmitPanel() {
   }
 
   function addPhoto() {
+    if (photos.length >= photoLimit) return;
     setPhotos((prev) => [...prev, { file: null, caption: "", title: "", medium: "", panels: [] }]);
   }
 
@@ -217,13 +186,14 @@ export default function SubmitPanel() {
       if (manuscript[0]) fd.append("manuscript", manuscript[0]);
       if (cover[0]) fd.append("cover", cover[0]);
     } else {
-      if (cover[0]) fd.append("cover", cover[0]);
       photos.forEach((p, i) => {
         if (p.file) fd.append(`photo_${i}_file`, p.file);
         fd.append(`photo_${i}_caption`, p.caption);
         fd.append(`photo_${i}_title`, p.title);
         if (p.medium) fd.append(`photo_${i}_medium`, p.medium);
-        p.panels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
+        if (category === "Comics" && comicType === "multi") {
+          p.panels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
+        }
       });
     }
 
@@ -264,10 +234,8 @@ export default function SubmitPanel() {
         <p className="font-body text-sm text-charcoal/60 max-w-xs mb-8">
           We ask you to sign in so we can reach you about your submission.
         </p>
-        <button
-          onClick={promptSignIn}
-          className="px-6 py-3 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 transition-colors"
-        >
+        <button onClick={promptSignIn}
+          className="px-6 py-3 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 transition-colors">
           Sign in with Google
         </button>
       </div>
@@ -282,13 +250,9 @@ export default function SubmitPanel() {
         {/* Header */}
         <div className="text-center space-y-2">
           <KanthaDivider className="max-w-[160px] mx-auto" />
-          <p className="font-body text-[10px] text-charcoal/40 uppercase tracking-widest pt-2">
-            প্রবাসফেরি
-          </p>
+          <p className="font-body text-[10px] text-charcoal/40 uppercase tracking-widest pt-2">প্রবাসফেরি</p>
           <h1 className="heading-display text-3xl text-charcoal">Submit Your Work</h1>
-          <p className="font-body text-sm text-charcoal/50">
-            Essays, photography, art, and comics.
-          </p>
+          <p className="font-body text-sm text-charcoal/50">Essays, photography, art, and comics.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -298,55 +262,47 @@ export default function SubmitPanel() {
             <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">Category</label>
             <div className="grid grid-cols-2 gap-2">
               {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
+                <button key={cat} type="button" onClick={() => setCategory(cat)}
                   className={`py-2.5 rounded-lg text-sm font-body border transition-colors ${
-                    category === cat
-                      ? "bg-charcoal text-paper border-charcoal"
-                      : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
-                  }`}
-                >
+                    category === cat ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                  }`}>
                   {cat}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Format guidance */}
+          <div className="bg-charcoal/[0.03] border border-charcoal/8 rounded-lg px-4 py-3 space-y-1">
+            <p className="font-body text-[10px] text-charcoal/40 uppercase tracking-widest mb-2">Format guidelines</p>
+            {FORMAT_HINTS[category].map((hint, i) => (
+              <p key={i} className="font-body text-xs text-charcoal/55 leading-relaxed">
+                {hint}
+              </p>
+            ))}
+          </div>
+
           {/* Common fields */}
           <div className="space-y-5">
             <TextField label="Title" value={title} onChange={setTitle} placeholder="Your title" required />
-            <TextField
-              label="Excerpt"
-              value={excerpt}
-              onChange={setExcerpt}
-              placeholder="One sentence. Appears in the table of contents."
-              multiline
-              required
-            />
+            <TextField label="Excerpt" value={excerpt} onChange={setExcerpt}
+              placeholder="One sentence. Appears in the table of contents." multiline required />
             <div className="font-body text-xs text-charcoal/50">
               Submitting as <span className="text-charcoal font-medium">{author}</span>
             </div>
           </div>
 
-          {/* Essays-specific */}
+          {/* Essays */}
           {category === "Essays" && (
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">Language</label>
                 <div className="flex gap-3 flex-wrap">
                   {(["en", "bn", "bil"] as const).map((l) => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setLang(l)}
+                    <button key={l} type="button" onClick={() => setLang(l)}
                       className={`px-4 py-1.5 rounded-full text-xs font-body border transition-colors ${
-                        lang === l
-                          ? "bg-charcoal text-paper border-charcoal"
-                          : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
-                      }`}
-                    >
+                        lang === l ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                      }`}>
                       {l === "en" ? "English" : l === "bn" ? "বাংলা" : "Bilingual"}
                     </button>
                   ))}
@@ -354,118 +310,102 @@ export default function SubmitPanel() {
               </div>
               <TagPicker label="Type" options={TYPE_TAGS} value={type} onChange={setType} />
               <div className="space-y-2">
-                <TagPicker label="Flavor" options={FLAVOR_TAGS} value={customFlavor ? "" : flavor} onChange={(v) => { setFlavor(v); setCustomFlavor(""); }} />
-                <input
-                  type="text"
-                  value={customFlavor}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\s/g, "");
-                    setCustomFlavor(val);
-                    if (val) setFlavor("");
-                  }}
+                <TagPicker label="Flavor" options={FLAVOR_TAGS}
+                  value={customFlavor ? "" : flavor}
+                  onChange={(v) => { setFlavor(v); setCustomFlavor(""); }} />
+                <input type="text" value={customFlavor}
+                  onChange={(e) => { const v = e.target.value.replace(/\s/g, ""); setCustomFlavor(v); if (v) setFlavor(""); }}
                   placeholder="Or type your own (one word)"
-                  className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors"
-                />
+                  className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
               </div>
-              <FileButton
-                label="Manuscript"
-                accept=".docx"
-                hint=".docx only. Bengali text must be Unicode typed, not a scan."
-                files={manuscript}
-                onChange={setManuscript}
-              />
-              <FileButton
-                label="Cover Image (optional)"
-                accept="image/jpeg,image/png"
-                hint={CATEGORY_HINT[category]}
-                files={cover}
-                onChange={setCover}
-              />
+              <FileButton label="Manuscript" accept=".docx" required
+                hint=".docx (Word file). Accept all tracked changes before submitting."
+                files={manuscript} onChange={setManuscript} />
+              <FileButton label="Cover Image (optional)" accept="image/jpeg,image/png"
+                hint="JPEG or PNG. We may source our own if not provided."
+                files={cover} onChange={setCover} />
             </div>
           )}
 
-          {/* Photography / Art / Comics */}
-          {category !== "Essays" && (
-            <div className="space-y-6">
-              <FileButton
-                label="Cover Image"
-                accept="image/jpeg,image/png"
-                hint={CATEGORY_HINT[category]}
-                files={cover}
-                onChange={setCover}
-              />
-
-              <div className="space-y-2">
+          {/* Photography / Art */}
+          {(category === "Photography" || category === "Art") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">
-                  {category === "Comics" ? "Strips" : "Photos"}
+                  {category === "Photography" ? "Photos" : "Works"}<span className="text-sindoor ml-0.5">*</span>
                 </label>
+                <span className="font-body text-[11px] text-charcoal/35">{photos.length} / {photoLimit}</span>
+              </div>
 
-                {photos.map((photo, i) => (
-                  <div key={i} className="border border-charcoal/10 rounded-lg p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-body text-xs text-charcoal/40">
-                        {category === "Comics" ? `Strip ${i + 1}` : `Photo ${i + 1}`}
-                      </span>
-                      {photos.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(i)}
-                          className="font-body text-xs text-charcoal/30 hover:text-sindoor transition-colors"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-
-                    <FileButton
-                      label="Image"
-                      accept="image/jpeg,image/png"
-                      files={photo.file ? [photo.file] : []}
-                      onChange={(files) => updatePhoto(i, { file: files[0] ?? null })}
-                    />
-                    <TextField
-                      label="Caption"
-                      value={photo.caption}
-                      onChange={(v) => updatePhoto(i, { caption: v })}
-                      placeholder="Caption for this image"
-                    />
-                    <TextField
-                      label="Title (optional)"
-                      value={photo.title}
-                      onChange={(v) => updatePhoto(i, { title: v })}
-                      placeholder="Individual title"
-                    />
-                    {category === "Art" && (
-                      <TextField
-                        label="Medium"
-                        value={photo.medium}
-                        onChange={(v) => updatePhoto(i, { medium: v })}
-                        placeholder="e.g. Oil on canvas, Digital illustration"
-                      />
-                    )}
-                    {category === "Comics" && (
-                      <FileButton
-                        label="Panel files (multi-panel comics only)"
-                        accept="image/jpeg,image/png"
-                        hint="One file per panel, in order. Same aspect ratio throughout."
-                        multiple
-                        files={photo.panels}
-                        onChange={(files) => updatePhoto(i, { panels: files })}
-                      />
+              {photos.map((photo, i) => (
+                <div key={i} className="border border-charcoal/10 rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body text-xs text-charcoal/40">
+                      {category === "Photography" ? `Photo ${i + 1}` : `Work ${i + 1}`}
+                    </span>
+                    {photos.length > 1 && (
+                      <button type="button" onClick={() => removePhoto(i)}
+                        className="font-body text-xs text-charcoal/30 hover:text-sindoor transition-colors">
+                        Remove
+                      </button>
                     )}
                   </div>
-                ))}
+                  <FileButton label="Image" accept="image/jpeg,image/png" required={i === 0}
+                    hint={category === "Photography" ? "JPEG only. Min 1500px on longest side. sRGB." : "JPEG or PNG. Min 1500px. RGB colour mode."}
+                    files={photo.file ? [photo.file] : []} onChange={(files) => updatePhoto(i, { file: files[0] ?? null })} />
+                  <TextField label="Caption" value={photo.caption} onChange={(v) => updatePhoto(i, { caption: v })}
+                    placeholder="Caption for this image" />
+                  <TextField label="Title (optional)" value={photo.title} onChange={(v) => updatePhoto(i, { title: v })}
+                    placeholder="Individual title" />
+                  {category === "Art" && (
+                    <TextField label="Medium" value={photo.medium} onChange={(v) => updatePhoto(i, { medium: v })}
+                      placeholder="e.g. Oil on canvas, Digital illustration" />
+                  )}
+                </div>
+              ))}
 
-                {category !== "Comics" || photos.length < 20 ? (
-                  <button
-                    type="button"
-                    onClick={addPhoto}
-                    className="w-full py-2 font-body text-sm text-charcoal/40 hover:text-charcoal/60 border border-dashed border-charcoal/15 rounded-lg transition-colors"
-                  >
-                    + Add another
-                  </button>
-                ) : null}
+              {photos.length < photoLimit && (
+                <button type="button" onClick={addPhoto}
+                  className="w-full py-2 font-body text-sm text-charcoal/40 hover:text-charcoal/60 border border-dashed border-charcoal/15 rounded-lg transition-colors">
+                  + Add another (max {photoLimit})
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Comics */}
+          {category === "Comics" && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">Type</label>
+                <div className="flex gap-3">
+                  {(["single", "multi"] as ComicType[]).map((t) => (
+                    <button key={t} type="button" onClick={() => setComicType(t)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-body border transition-colors ${
+                        comicType === t ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                      }`}>
+                      {t === "single" ? "Single panel" : "Multi-panel"}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {comicType === "single" ? (
+                <FileButton label="Panel image" accept="image/jpeg,image/png" required
+                  hint="JPEG or PNG. Min 1200px wide."
+                  files={photos[0].file ? [photos[0].file] : []}
+                  onChange={(files) => updatePhoto(0, { file: files[0] ?? null })} />
+              ) : (
+                <div className="space-y-4">
+                  <FileButton label="Panel files" accept="image/jpeg,image/png" multiple required
+                    hint="One file per panel, in order. All panels must share the same aspect ratio. Min 1200px wide."
+                    files={photos[0].panels}
+                    onChange={(files) => updatePhoto(0, { file: files[0] ?? null, panels: files })} />
+                </div>
+              )}
+
+              <TextField label="Caption / episode title" value={photos[0].caption}
+                onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" />
             </div>
           )}
 
@@ -475,16 +415,13 @@ export default function SubmitPanel() {
           )}
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={!isFormValid || status === "submitting"}
-            className="w-full py-3.5 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
+          <button type="submit" disabled={!isFormValid || status === "submitting"}
+            className="w-full py-3.5 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             {status === "submitting" ? "Sending..." : "Submit"}
           </button>
 
           <p className="font-body text-[10px] text-charcoal/30 text-center pb-4">
-            We review all submissions before publication. You will hear from us either way.
+            Submissions are final and cannot be edited after sending. We review everything and will be in touch either way.
           </p>
 
         </form>
