@@ -63,7 +63,7 @@ function TagPicker({ label, options, value, onChange }: {
         {options.map((opt) => (
           <button key={opt} type="button" onClick={() => onChange(value === opt ? "" : opt)}
             className={`px-3 py-1 rounded-full text-xs font-body border transition-colors ${
-              value === opt ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+              value === opt ? "bg-terracotta text-paper border-terracotta" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-terracotta/40"
             }`}>
             {opt}
           </button>
@@ -123,7 +123,6 @@ export default function SubmitPanel() {
 
   const [category, setCategory] = useState<Category>("Essays");
   const [title, setTitle] = useState("");
-  const [excerpt, setExcerpt] = useState("");
   const [lang, setLang] = useState<"en" | "bn" | "bil">("en");
   const [flavor, setFlavor] = useState("");
   const [customFlavor, setCustomFlavor] = useState("");
@@ -142,7 +141,7 @@ export default function SubmitPanel() {
   const photoLimit = category === "Comics" ? 1 : 3;
 
   const isFormValid = (() => {
-    if (!title.trim() || !excerpt.trim()) return false;
+    if (!title.trim()) return false;
     if (category === "Essays") return manuscript.length > 0;
     if (category === "Comics") {
       const first = photos[0];
@@ -176,7 +175,7 @@ export default function SubmitPanel() {
     fd.append("category", category);
     fd.append("title", title);
     fd.append("author", author);
-    fd.append("excerpt", excerpt);
+    fd.append("excerpt", title);
     fd.append("lang", lang);
     const effectiveFlavor = customFlavor.trim() || flavor;
     if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
@@ -284,8 +283,6 @@ export default function SubmitPanel() {
           {/* Common fields */}
           <div className="space-y-5">
             <TextField label="Title" value={title} onChange={setTitle} placeholder="Your title" required />
-            <TextField label="Excerpt" value={excerpt} onChange={setExcerpt}
-              placeholder="One sentence. Appears in the table of contents." multiline required />
             <div className="font-body text-xs text-charcoal/50">
               Submitting as <span className="text-charcoal font-medium">{author}</span>
             </div>

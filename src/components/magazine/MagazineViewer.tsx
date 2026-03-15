@@ -628,16 +628,16 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
       {/* Magazine share button — mirrors TOC on the left, cover only */}
       <motion.button
         onClick={handleMagazineShare}
-        animate={{ opacity: onCover && controlsVisible ? 1 : 0, scale: onCover && controlsVisible ? 1 : 0.8 }}
+        animate={{ opacity: onCover ? 1 : 0, scale: onCover ? 1 : 0.8 }}
         transition={{ duration: 0.3 }}
         className="fixed bottom-6 left-4 z-50 w-10 h-10 rounded-full bg-charcoal/60 backdrop-blur-sm text-white flex items-center justify-center safe-bottom"
         aria-label="Share magazine"
-        style={{ pointerEvents: onCover && controlsVisible ? "auto" : "none" }}
+        style={{ pointerEvents: onCover ? "auto" : "none" }}
       >
         {shareCopied ? <Check size={18} /> : <Share2 size={18} />}
       </motion.button>
 
-      <TableOfContents articles={articles} editorial={editorial} articleOffset={articleOffset} currentIndex={currentIndex} activeCardIndex={activeCardIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={controlsVisible} />
+      <TableOfContents articles={articles} editorial={editorial} articleOffset={articleOffset} currentIndex={currentIndex} activeCardIndex={activeCardIndex} onSelect={handleArticleSelect} onSectionSelect={handleSectionSelect} open={tocOpen} onOpenChange={handleTocOpenChange} visible={onCover || controlsVisible} />
     </div>
   );
 }
