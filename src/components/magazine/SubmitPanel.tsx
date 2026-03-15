@@ -165,8 +165,9 @@ export default function SubmitPanel() {
   const [category, setCategory] = useState<Category>("Essays");
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [lang, setLang] = useState<"en" | "bn">("en");
+  const [lang, setLang] = useState<"en" | "bn" | "bil">("en");
   const [flavor, setFlavor] = useState("");
+  const [customFlavor, setCustomFlavor] = useState("");
   const [type, setType] = useState("");
   const [manuscript, setManuscript] = useState<File[]>([]);
   const [cover, setCover] = useState<File[]>([]);
@@ -177,6 +178,12 @@ export default function SubmitPanel() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const author = user?.displayName ?? "";
+
+  const isFormValid = (() => {
+    if (!title.trim() || !excerpt.trim()) return false;
+    if (category === "Essays") return manuscript.length > 0;
+    return cover.length > 0 && photos.some((p) => p.file !== null);
+  })();
 
   function updatePhoto(index: number, patch: Partial<PhotoEntry>) {
     setPhotos((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
@@ -202,7 +209,8 @@ export default function SubmitPanel() {
     fd.append("author", author);
     fd.append("excerpt", excerpt);
     fd.append("lang", lang);
-    if (flavor) fd.append("flavor", flavor);
+    const effectiveFlavor = customFlavor.trim() || flavor;
+    if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
     if (type) fd.append("type", type);
 
     if (category === "Essays") {
@@ -313,7 +321,7 @@ export default function SubmitPanel() {
               label="Excerpt"
               value={excerpt}
               onChange={setExcerpt}
-              placeholder="One sentence — appears in the table of contents"
+              placeholder="One sentence. Appears in the table of contents."
               multiline
               required
             />
@@ -327,8 +335,8 @@ export default function SubmitPanel() {
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">Language</label>
-                <div className="flex gap-3">
-                  {(["en", "bn"] as const).map((l) => (
+                <div className="flex gap-3 flex-wrap">
+                  {(["en", "bn", "bil"] as const).map((l) => (
                     <button
                       key={l}
                       type="button"
@@ -339,13 +347,26 @@ export default function SubmitPanel() {
                           : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
                       }`}
                     >
-                      {l === "en" ? "English" : "বাংলা"}
+                      {l === "en" ? "English" : l === "bn" ? "বাংলা" : "Bilingual"}
                     </button>
                   ))}
                 </div>
               </div>
               <TagPicker label="Type" options={TYPE_TAGS} value={type} onChange={setType} />
-              <TagPicker label="Flavor" options={FLAVOR_TAGS} value={flavor} onChange={setFlavor} />
+              <div className="space-y-2">
+                <TagPicker label="Flavor" options={FLAVOR_TAGS} value={customFlavor ? "" : flavor} onChange={(v) => { setFlavor(v); setCustomFlavor(""); }} />
+                <input
+                  type="text"
+                  value={customFlavor}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\s/g, "");
+                    setCustomFlavor(val);
+                    if (val) setFlavor("");
+                  }}
+                  placeholder="Or type your own (one word)"
+                  className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors"
+                />
+              </div>
               <FileButton
                 label="Manuscript"
                 accept=".docx"
@@ -456,8 +477,8 @@ export default function SubmitPanel() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={status === "submitting"}
-            className="w-full py-3.5 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 disabled:opacity-50 transition-colors"
+            disabled={!isFormValid || status === "submitting"}
+            className="w-full py-3.5 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {status === "submitting" ? "Sending..." : "Submit"}
           </button>

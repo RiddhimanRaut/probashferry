@@ -557,7 +557,7 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
 
       {/* Controls */}
       <AnimatePresence>
-        {controlsVisible && !onCover && !onTeam && (
+        {controlsVisible && !onCover && !onTeam && !onSubmit && (
           <>
             <motion.div
               key="backdrop"
