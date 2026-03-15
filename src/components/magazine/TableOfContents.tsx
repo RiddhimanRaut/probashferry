@@ -298,8 +298,8 @@ export default function TableOfContents({ articles, editorial, articleOffset, cu
                   })}
                 </div>
 
-                {/* Meet The Team */}
-                <div className="border-t border-charcoal/10 mt-3 pt-3">
+                {/* Meet The Team + Submit */}
+                <div className="border-t border-charcoal/10 mt-3 pt-3 space-y-1">
                   <button
                     onClick={() => { onSelect(articles.length + articleOffset); onOpenChange(false); }}
                     className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 ${
@@ -311,6 +311,18 @@ export default function TableOfContents({ articles, editorial, articleOffset, cu
                     <div>
                       <p className="font-medium text-sm">Meet The Team</p>
                       <span className="text-xs text-charcoal/40">The people behind the magazine</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { onSelect(articles.length + articleOffset + 1); onOpenChange(false); }}
+                    className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 ${
+                      currentIndex === articles.length + articleOffset + 1 ? "bg-terracotta/10 text-terracotta" : "hover:bg-charcoal/5 text-charcoal"
+                    }`}
+                  >
+                    <PenLine size={16} className="opacity-50 shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Submit Your Work</p>
+                      <span className="text-xs text-charcoal/40">Essays, photography, art, comics</span>
                     </div>
                   </button>
                 </div>

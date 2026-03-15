@@ -11,6 +11,8 @@ import PhotoGalleryPanel from "./PhotoGalleryPanel";
 import ComicsGalleryPanel from "./ComicsGalleryPanel";
 import ArtGalleryPanel from "./ArtGalleryPanel";
 import TeamPanel from "./TeamPanel";
+import dynamic from "next/dynamic";
+const SubmitPanel = dynamic(() => import("./SubmitPanel"), { ssr: false });
 import TableOfContents, { SECTION_ICONS } from "./TableOfContents";
 import Header from "@/components/layout/Header";
 
@@ -51,7 +53,7 @@ interface MagazineViewerProps {
 export default function MagazineViewer({ articles, editorial, initialArticleSlug, initialPhotoIndex }: MagazineViewerProps) {
   const hasEditorial = !!editorial;
   const articleOffset = hasEditorial ? 2 : 1;
-  const totalPanels = articles.length + articleOffset + 1; // +1 for team panel
+  const totalPanels = articles.length + articleOffset + 2; // +1 team, +1 submit
   const { currentIndex, direction, goTo, goNext, goPrev } = useSwipe(totalPanels);
   const initialNavDone = useRef(false);
   const [pendingPhoto, setPendingPhoto] = useState<number | undefined>(initialPhotoIndex);
@@ -250,7 +252,7 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
   }, []);
 
   const fireDoubleTap = useCallback((x: number, y: number) => {
-    if (currentIndexRef.current === 0 || currentIndexRef.current === totalPanels - 1) return; // no hearts on cover or team
+    if (currentIndexRef.current === 0 || currentIndexRef.current >= totalPanels - 2) return; // no hearts on cover, team, or submit
     // Only fire on content cards, not hero headers
     const el = document.elementFromPoint(x, y);
     if (!el?.closest("[data-likeable]")) return;
@@ -345,7 +347,8 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
   );
 
   const onCover = currentIndex === 0;
-  const onTeam = currentIndex === totalPanels - 1;
+  const onTeam = currentIndex === totalPanels - 2;
+  const onSubmit = currentIndex === totalPanels - 1;
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalPanels - 1;
   const controlsVisible = showControls || desktopHover;
@@ -391,6 +394,8 @@ export default function MagazineViewer({ articles, editorial, initialArticleSlug
         >
           {onCover ? (
             <CoverPanel />
+          ) : onSubmit ? (
+            <SubmitPanel />
           ) : onTeam ? (
             <TeamPanel />
           ) : hasEditorial && currentIndex === 1 ? (

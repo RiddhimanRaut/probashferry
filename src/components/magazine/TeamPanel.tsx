@@ -364,11 +364,10 @@ export default function TeamPanel() {
       <footer className="text-center px-6 pt-4 pb-2">
         <KanthaDivider className="max-w-[200px] mx-auto" />
         <h3 className="heading-display text-2xl text-charcoal mt-2">
-          Get in Touch
+          Say Hello
         </h3>
         <p className="font-body text-sm text-charcoal/60 leading-relaxed max-w-xs mx-auto mt-3">
-          Want to submit an article, ask a question, or share feedback?
-          We&apos;d love to hear from you.
+          Questions, thoughts, feedback. We read everything.
         </p>
         <a
           href="mailto:probashferrymagazine@gmail.com"
@@ -376,6 +375,9 @@ export default function TeamPanel() {
         >
           probashferrymagazine@gmail.com
         </a>
+        <p className="font-body text-xs text-charcoal/40 mt-4 tracking-wide">
+          To contribute, swipe →
+        </p>
         <p className="font-body text-[10px] text-charcoal/30 mt-4">
           &copy; 2026 Probashferry. All rights reserved.
         </p>
