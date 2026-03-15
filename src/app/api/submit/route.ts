@@ -4,6 +4,9 @@ import { Readable } from "stream";
 import config from "../../../../content/config.json";
 
 const DRIVE_SUBMISSIONS_ROOT = process.env.GOOGLE_DRIVE_SUBMISSIONS_FOLDER_ID!;
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!;
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 
 function getDriveClient() {
   const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!);
@@ -12,6 +15,54 @@ function getDriveClient() {
     scopes: ["https://www.googleapis.com/auth/drive"],
   });
   return google.drive({ version: "v3", auth });
+}
+
+/** Verify a Firebase ID token and return the uid, or null if invalid. */
+async function verifyIdToken(idToken: string): Promise<string | null> {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return (data.users?.[0]?.localId as string) ?? null;
+}
+
+/** Get a Firestore access token using the service account. */
+async function getFirestoreToken(): Promise<string> {
+  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!);
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/datastore"],
+  });
+  const client = await auth.getClient();
+  const token = await client.getAccessToken();
+  return token.token!;
+}
+
+/** Check if a Firestore document exists. */
+async function fsDocExists(path: string, token: string): Promise<boolean> {
+  const res = await fetch(`${FS_BASE}/${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.status === 200;
+}
+
+/** Write a Firestore document. */
+async function fsSetDoc(
+  path: string,
+  fields: Record<string, { stringValue: string }>,
+  token: string
+): Promise<void> {
+  await fetch(`${FS_BASE}/${path}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
 }
 
 async function findOrCreateFolder(
@@ -48,6 +99,7 @@ async function uploadFile(
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
+    const idToken = formData.get("idToken") as string | null;
     const category = formData.get("category") as string;
     const title = formData.get("title") as string;
     const author = formData.get("author") as string;
@@ -56,8 +108,28 @@ export async function POST(req: NextRequest) {
     const flavor = formData.get("flavor") as string | null;
     const type = formData.get("type") as string | null;
 
+    if (!idToken) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
     if (!category || !title || !author || !excerpt) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+
+    // Verify Firebase ID token
+    const uid = await verifyIdToken(idToken);
+    if (!uid) {
+      return NextResponse.json({ error: "Invalid or expired session. Please sign in again." }, { status: 401 });
+    }
+
+    // Check for duplicate submission
+    const submissionKey = `${uid}_${category}_${config.activeIssue}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const fsToken = await getFirestoreToken();
+    const alreadySubmitted = await fsDocExists(`submissions/${submissionKey}`, fsToken);
+    if (alreadySubmitted) {
+      return NextResponse.json(
+        { error: `You have already submitted to ${category} for this issue.` },
+        { status: 409 }
+      );
     }
 
     const drive = getDriveClient();
@@ -137,6 +209,19 @@ export async function POST(req: NextRequest) {
     // Write meta.json
     const metaBuffer = Buffer.from(JSON.stringify(meta, null, 2));
     await uploadFile(drive, "meta.json", "application/json", metaBuffer, submissionFolder);
+
+    // Record submission in Firestore to prevent duplicates
+    await fsSetDoc(
+      `submissions/${submissionKey}`,
+      {
+        uid: { stringValue: uid },
+        category: { stringValue: category },
+        issue: { stringValue: config.activeIssue },
+        slug: { stringValue: slug },
+        submittedAt: { stringValue: new Date().toISOString() },
+      },
+      fsToken
+    );
 
     return NextResponse.json({ success: true, slug });
   } catch (err) {

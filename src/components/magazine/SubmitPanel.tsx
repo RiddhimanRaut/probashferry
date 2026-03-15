@@ -171,7 +171,17 @@ export default function SubmitPanel() {
     setStatus("submitting");
     setErrorMsg("");
 
+    let idToken: string;
+    try {
+      idToken = await user.getIdToken();
+    } catch {
+      setStatus("error");
+      setErrorMsg("Authentication error. Please sign in again.");
+      return;
+    }
+
     const fd = new FormData();
+    fd.append("idToken", idToken);
     fd.append("category", category);
     fd.append("title", title);
     fd.append("author", author);
