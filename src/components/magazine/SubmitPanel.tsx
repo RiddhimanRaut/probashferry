@@ -235,7 +235,7 @@ export default function SubmitPanel() {
           We ask you to sign in so we can reach you about your submission.
         </p>
         <button onClick={promptSignIn}
-          className="px-6 py-3 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 transition-colors">
+          className="px-6 py-3 bg-terracotta text-paper font-body text-sm rounded-full hover:bg-terracotta/80 transition-colors">
           Sign in with Google
         </button>
       </div>
@@ -250,8 +250,7 @@ export default function SubmitPanel() {
         {/* Header */}
         <div className="text-center space-y-2">
           <KanthaDivider className="max-w-[160px] mx-auto" />
-          <p className="font-body text-[10px] text-charcoal/40 uppercase tracking-widest pt-2">প্রবাসফেরি</p>
-          <h1 className="heading-display text-3xl text-charcoal">Submit Your Work</h1>
+          <h1 className="heading-display text-3xl text-terracotta pt-2">Submit Your Work</h1>
           <p className="font-body text-sm text-charcoal/50">Essays, photography, art, and comics.</p>
         </div>
 
@@ -264,7 +263,7 @@ export default function SubmitPanel() {
               {CATEGORIES.map((cat) => (
                 <button key={cat} type="button" onClick={() => setCategory(cat)}
                   className={`py-2.5 rounded-lg text-sm font-body border transition-colors ${
-                    category === cat ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                    category === cat ? "bg-terracotta text-paper border-terracotta" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-terracotta/40 hover:text-terracotta"
                   }`}>
                   {cat}
                 </button>
@@ -273,10 +272,10 @@ export default function SubmitPanel() {
           </div>
 
           {/* Format guidance */}
-          <div className="bg-charcoal/[0.03] border border-charcoal/8 rounded-lg px-4 py-3 space-y-1">
-            <p className="font-body text-[10px] text-charcoal/40 uppercase tracking-widest mb-2">Format guidelines</p>
+          <div className="border-l-2 border-mustard bg-mustard/5 rounded-r-lg px-4 py-3 space-y-1">
+            <p className="font-body text-[10px] text-terracotta uppercase tracking-widest mb-2">Format guidelines</p>
             {FORMAT_HINTS[category].map((hint, i) => (
-              <p key={i} className="font-body text-xs text-charcoal/55 leading-relaxed">
+              <p key={i} className="font-body text-xs text-charcoal/60 leading-relaxed">
                 {hint}
               </p>
             ))}
@@ -301,7 +300,7 @@ export default function SubmitPanel() {
                   {(["en", "bn", "bil"] as const).map((l) => (
                     <button key={l} type="button" onClick={() => setLang(l)}
                       className={`px-4 py-1.5 rounded-full text-xs font-body border transition-colors ${
-                        lang === l ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                        lang === l ? "bg-terracotta text-paper border-terracotta" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-terracotta/40"
                       }`}>
                       {l === "en" ? "English" : l === "bn" ? "বাংলা" : "Bilingual"}
                     </button>
@@ -338,7 +337,7 @@ export default function SubmitPanel() {
               </div>
 
               {photos.map((photo, i) => (
-                <div key={i} className="border border-charcoal/10 rounded-lg p-4 space-y-4">
+                <div key={i} className="border border-mustard/30 rounded-lg p-4 space-y-4 bg-mustard/[0.02]">
                   <div className="flex items-center justify-between">
                     <span className="font-body text-xs text-charcoal/40">
                       {category === "Photography" ? `Photo ${i + 1}` : `Work ${i + 1}`}
@@ -382,7 +381,7 @@ export default function SubmitPanel() {
                   {(["single", "multi"] as ComicType[]).map((t) => (
                     <button key={t} type="button" onClick={() => setComicType(t)}
                       className={`px-4 py-1.5 rounded-full text-xs font-body border transition-colors ${
-                        comicType === t ? "bg-charcoal text-paper border-charcoal" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-charcoal/40"
+                        comicType === t ? "bg-terracotta text-paper border-terracotta" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-terracotta/40"
                       }`}>
                       {t === "single" ? "Single panel" : "Multi-panel"}
                     </button>
@@ -404,7 +403,7 @@ export default function SubmitPanel() {
                 </div>
               )}
 
-              <TextField label="Caption / episode title" value={photos[0].caption}
+              <TextField label="Caption" value={photos[0].caption}
                 onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" />
             </div>
           )}
@@ -416,7 +415,7 @@ export default function SubmitPanel() {
 
           {/* Submit */}
           <button type="submit" disabled={!isFormValid || status === "submitting"}
-            className="w-full py-3.5 bg-charcoal text-paper font-body text-sm rounded-full hover:bg-charcoal/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            className="w-full py-3.5 bg-terracotta text-paper font-body text-sm rounded-full hover:bg-terracotta/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             {status === "submitting" ? "Sending..." : "Submit"}
           </button>
 
