@@ -32,7 +32,7 @@ Each article's `category` field determines which panel component renders it. The
 The core UI. Renders a horizontal sequence of full-screen panels:
 
 ```
-[CoverPanel] → [ArticlePanel|PhotoGalleryPanel|ComicsGalleryPanel|ArtGalleryPanel]... → [TeamPanel]
+[CoverPanel] → [ArticlePanel|PhotoGalleryPanel|ComicsGalleryPanel|ArtGalleryPanel]... → [TeamPanel] → [SubmitPanel]
 ```
 
 MagazineViewer owns all gesture handling (swipe, single-tap for controls, double-tap for likes, keyboard nav). It routes double-tap events to individual cards via `doubleTapEvent` prop and per-card hit-testing. Panel navigation uses `useSwipe` hook which persists index to sessionStorage.

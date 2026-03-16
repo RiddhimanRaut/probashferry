@@ -28,6 +28,8 @@ One feature per chat session. Pick one item from **Planned** and move it to **In
 - [x] Vercel deployment — manual `vercel --prod`
 - [x] Submission pipeline — reader form, Google Drive upload, Firestore duplicate guard
 - [x] Documentation — ADMIN.md (technical), SUBMISSIONS_GUIDE.md (editorial team), EDITORIAL.md (content pipeline)
+- [x] TeamPanel roles — updated to match actual team structure (EIC, Outreach Director, Social Media Head, Art & Design Director, Founder/Tech Lead/Co-Editor)
+- [x] SubmitPanel — header unified with TeamPanel (matching font size, padding, divider)
 
 ---
 
