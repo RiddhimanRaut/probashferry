@@ -58,9 +58,27 @@ Multi-panel comics use a Framer Motion carousel with `useMotionValue` + `fmAnima
 
 Auth: Google OAuth via Firebase Auth with redirect flow. Firestore uses a custom REST client (`src/lib/firebase/firestore-rest.ts`) instead of the SDK's WebChannel transport.
 
-Collections: `articles/{id}` (likeCount, commentCount), `likes/{articleId}/users/{userId}`, `comments/{articleId}/messages/{commentId}`.
+Collections:
+- `articles/{id}` — likeCount, commentCount. Gallery IDs use `{slug}-photo-{index}`.
+- `likes/{articleId}/users/{userId}` — one doc per like, presence = liked
+- `comments/{articleId}/messages/{commentId}` — text, authorName, createdAt
+- `submissions/{uid}_{category}_{issue}` — duplicate submission lock. Written by the API route (service account) after a successful Drive upload. Deleting a doc re-opens that slot.
 
 Likes use atomic batch commits (like-doc write + count increment). Comments poll every 5s. Both use optimistic updates with rollback and poll suppression during writes.
+
+### Submission Pipeline
+
+Reader-facing form at `src/components/magazine/SubmitPanel.tsx` (imported with `ssr: false` to prevent hydration mismatch). Serverless API at `src/app/api/submit/route.ts`.
+
+Flow:
+1. Client gets a fresh Firebase ID token (`user.getIdToken()`) and sends it with the FormData
+2. API verifies the token via `identitytoolkit.googleapis.com/v1/accounts:lookup` to extract the real UID
+3. API checks Firestore for `submissions/{uid}_{category}_{issue}` — returns 409 if found
+4. API authenticates with Google Drive via service account (`GOOGLE_SERVICE_ACCOUNT_JSON`)
+5. API creates `submissions/{activeIssue}/pending/{slug}/` in Drive and uploads all files + `meta.json`
+6. API writes the Firestore submission record to lock the slot
+
+Active issue is read from `content/config.json` (`activeIssue` field). Changing this value and deploying opens a new issue's submission folder automatically on first submission.
 
 ### Auth Gating
 
