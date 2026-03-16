@@ -9,12 +9,12 @@ import { useAuthContext } from "@/providers/AuthProvider";
 /* ------------------------------------------------------------------ */
 
 const MAX_DIMENSION = 2000;
-const JPEG_QUALITY = 0.92;
-const MAX_FILE_SIZE = 3.5 * 1024 * 1024; // 3.5MB
+const JPEG_QUALITY = 0.85;
+const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB — compress anything larger
 
 function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
-    if (file.size <= MAX_FILE_SIZE && !file.type.includes("png")) {
+    if (file.size <= MAX_FILE_SIZE && file.type === "image/jpeg") {
       resolve(file);
       return;
     }
@@ -264,6 +264,7 @@ export default function SubmitPanel() {
 
     try {
       const res = await fetch("/api/submit", { method: "POST", body: fd });
+      if (res.status === 413) throw new Error("File too large. Please use smaller images.");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Submission failed.");
       setStatus("success");
