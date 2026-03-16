@@ -258,9 +258,8 @@ export default function SubmitPanel() {
 
         {/* Header */}
         <div className="text-center space-y-2">
+          <h1 className="heading-display text-3xl text-charcoal">Submit Your Work</h1>
           <KanthaDivider className="max-w-[160px] mx-auto" />
-          <h1 className="heading-display text-3xl text-terracotta pt-2">Submit Your Work</h1>
-          <p className="font-body text-sm text-charcoal/50">Essays, photography, art, and comics.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
