@@ -264,7 +264,7 @@ export default function SubmitPanel() {
           <KanthaDivider className="max-w-[200px] mx-auto" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} noValidate className="space-y-8">
 
           {/* Category selector */}
           <div className="space-y-2">

@@ -242,8 +242,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, slug });
   } catch (err) {
-    const errMsg = err instanceof Error ? `${err.message} | ${err.stack?.split("\n")[1]?.trim()}` : String(err);
-    console.error("Submit error:", errMsg);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    console.error("Submit error:", err);
+    return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
   }
 }
