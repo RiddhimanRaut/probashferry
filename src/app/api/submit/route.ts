@@ -145,13 +145,14 @@ export async function POST(req: NextRequest) {
 
     const drive = getDriveClient();
 
-    // Find the pending folder for the active issue
+    // Find the pending folder for the active issue, organized by category
     const issueFolder = await findOrCreateFolder(drive, config.activeIssue, DRIVE_SUBMISSIONS_ROOT);
     const pendingFolder = await findOrCreateFolder(drive, "pending", issueFolder);
+    const categoryFolder = await findOrCreateFolder(drive, category, pendingFolder);
 
-    // Create a slug from title + timestamp for uniqueness
-    const slug = `${category.toLowerCase()}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}-${Date.now()}`;
-    const submissionFolder = await findOrCreateFolder(drive, slug, pendingFolder);
+    // Human-readable folder name: author_title
+    const slug = `${author.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}_${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`;
+    const submissionFolder = await findOrCreateFolder(drive, slug, categoryFolder);
 
     // Build meta.json
     const meta: Record<string, unknown> = { title, author, excerpt, category, lang };
