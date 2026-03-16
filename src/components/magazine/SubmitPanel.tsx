@@ -92,7 +92,7 @@ const FORMAT_HINTS: Record<Category, string[]> = {
     "One submission per issue.",
   ],
   Comics: [
-    "Single-panel: one JPEG or PNG.",
+    "Strip: one JPEG or PNG.",
     "Multi-panel: one image file per panel, numbered in order. All panels must share the same aspect ratio.",
     "Minimum 1200px wide per panel.",
     "One submission per issue.",
@@ -248,38 +248,45 @@ export default function SubmitPanel() {
     const fd = new FormData();
     fd.append("idToken", idToken);
     fd.append("category", category);
-    if (title) fd.append("title", title);
     fd.append("author", author);
-    fd.append("lang", lang);
-    if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
-    if (type) fd.append("type", type);
 
     if (category === "Letters") {
+      fd.append("title", title);
+      fd.append("lang", lang);
+      if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
+      if (type) fd.append("type", type);
       if (manuscript[0]) fd.append("manuscript", manuscript[0]);
       if (cover[0]) {
         const [compressed] = await compressFiles([cover[0]]);
         fd.append("cover", compressed);
       }
+    } else if (category === "Comics") {
+      fd.append("title", title);
+      const p = photos[0];
+      if (p.file) {
+        const [compressed] = await compressFiles([p.file]);
+        fd.append("photo_0_file", compressed);
+      }
+      fd.append("photo_0_caption", p.caption);
+      fd.append("photo_0_flavor", p.flavor);
+      fd.append("photo_0_type", comicType === "single" ? "Strip" : "Multi-panel");
+      if (comicType === "multi") {
+        const compressedPanels = await compressFiles(p.panels);
+        compressedPanels.forEach((panel, pi) => fd.append(`photo_0_panel_${pi}`, panel));
+      }
     } else {
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        if (p.file) {
-          const [compressed] = await compressFiles([p.file]);
-          fd.append(`photo_${i}_file`, compressed);
-        }
-        fd.append(`photo_${i}_caption`, p.caption);
-        fd.append(`photo_${i}_title`, p.title);
-        if (p.medium) fd.append(`photo_${i}_medium`, p.medium);
-        if (p.flavor) fd.append(`photo_${i}_flavor`, p.flavor);
-        if (category === "Comics") {
-          fd.append(`photo_${i}_type`, comicType === "single" ? "Strip" : "Multi-panel");
-        } else if (p.type) {
-          fd.append(`photo_${i}_type`, p.type);
-        }
-        if (category === "Comics" && comicType === "multi") {
-          const compressedPanels = await compressFiles(p.panels);
-          compressedPanels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
-        }
+      // Photography / Art — only send blocks that have a file
+      let idx = 0;
+      for (const p of photos) {
+        if (!p.file) continue;
+        const [compressed] = await compressFiles([p.file]);
+        fd.append(`photo_${idx}_file`, compressed);
+        fd.append(`photo_${idx}_caption`, p.caption);
+        fd.append(`photo_${idx}_title`, p.title);
+        if (p.medium) fd.append(`photo_${idx}_medium`, p.medium);
+        fd.append(`photo_${idx}_flavor`, p.flavor);
+        fd.append(`photo_${idx}_type`, p.type);
+        idx++;
       }
     }
 
@@ -422,7 +429,10 @@ export default function SubmitPanel() {
                 <span className="font-body text-[11px] text-charcoal/35">{photos.length} / {photoLimit}</span>
               </div>
 
-              {photos.map((photo, i) => (
+              {photos.map((photo, i) => {
+                const hasFile = photo.file !== null;
+                const req = hasFile || i === 0;
+                return (
                 <div key={i} className="border border-mustard/30 rounded-lg p-4 space-y-4 bg-mustard/[0.02]">
                   <div className="flex items-center justify-between">
                     <span className="font-body text-xs text-charcoal/40">
@@ -439,15 +449,15 @@ export default function SubmitPanel() {
                     hint={category === "Photography" ? "JPEG or PNG. Min 1500px on longest side. sRGB." : "JPEG or PNG. Min 1500px. RGB colour mode."}
                     files={photo.file ? [photo.file] : []} onChange={(files) => updatePhoto(i, { file: files[0] ?? null })} />
                   <TextField label="Caption" value={photo.caption} onChange={(v) => updatePhoto(i, { caption: v })}
-                    placeholder="Caption for this image" required />
+                    placeholder="Caption for this image" required={req} />
                   <TextField label="Title" value={photo.title} onChange={(v) => updatePhoto(i, { title: v })}
-                    placeholder="Title of this work" required />
+                    placeholder="Title of this work" required={req} />
                   {category === "Art" && (
                     <TextField label="Medium" value={photo.medium} onChange={(v) => updatePhoto(i, { medium: v })}
-                      placeholder="e.g. Oil on canvas, Digital illustration" required />
+                      placeholder="e.g. Oil on canvas, Digital illustration" required={req} />
                   )}
                   <div className="space-y-2">
-                    <TagPicker label="Flavor" options={FLAVOR_TAGS} required
+                    <TagPicker label="Flavor" options={FLAVOR_TAGS} required={req}
                       value={FLAVOR_TAGS.includes(photo.flavor) ? photo.flavor : ""}
                       onChange={(v) => updatePhoto(i, { flavor: v })} />
                     <input type="text" value={!FLAVOR_TAGS.includes(photo.flavor) ? photo.flavor : ""}
@@ -456,7 +466,7 @@ export default function SubmitPanel() {
                       className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
                   </div>
                   <div className="space-y-2">
-                    <TagPicker label="Type" options={category === "Photography" ? PHOTO_TYPE_TAGS : ART_TYPE_TAGS} value={photo.type} required
+                    <TagPicker label="Type" options={category === "Photography" ? PHOTO_TYPE_TAGS : ART_TYPE_TAGS} value={photo.type} required={req}
                       onChange={(v) => updatePhoto(i, { type: v })} />
                     <input type="text" value={photo.type && ![...PHOTO_TYPE_TAGS, ...ART_TYPE_TAGS].includes(photo.type) ? photo.type : ""}
                       onChange={(e) => updatePhoto(i, { type: e.target.value.replace(/\s/g, "") })}
@@ -464,7 +474,8 @@ export default function SubmitPanel() {
                       className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {photos.length < photoLimit && (
                 <button type="button" onClick={addPhoto}
