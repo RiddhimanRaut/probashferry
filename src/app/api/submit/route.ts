@@ -8,10 +8,13 @@ const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!;
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 
-/** Parse the service account JSON, handling literal newlines in the private key. */
+/** Parse the service account JSON, handling both real newlines and escaped \n. */
 function getServiceAccountCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!.replace(/\n/g, "\\n");
-  return JSON.parse(raw);
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!;
+  // Try parsing as-is first (works when env var has escaped \n)
+  try { return JSON.parse(raw); } catch {}
+  // Replace real newlines with escaped \n (works when env var has literal newlines)
+  return JSON.parse(raw.replace(/\n/g, "\\n"));
 }
 
 function getDriveClient() {
