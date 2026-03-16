@@ -74,7 +74,7 @@ Needed to distinguish single-tap (open viewer) from double-tap (like). Without t
 
 ## Pending
 
-- **TeamPanel roles** — current hardcoded bios/roles in `TeamPanel.tsx` are outdated. Correct roles: Ritoja (Editor-in-Chief), Srijan (Outreach Manager), Pratyusha (Social Media & Community Manager), Abhipsha (Art & Creativity Director), Riddhiman (Founder, Tech Lead, Co-Editor).
+- **TeamPanel roles** — current hardcoded bios/roles in `TeamPanel.tsx` are outdated. Correct roles: Ritoja (Editor-in-Chief), Srijan (Outreach Director), Pratyusha (Social Media Head), Abhipsha (Art & Design Director), Riddhiman (Founder, Tech Lead, Co-Editor).
 
 ---
 

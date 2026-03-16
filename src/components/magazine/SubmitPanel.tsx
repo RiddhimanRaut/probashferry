@@ -254,12 +254,12 @@ export default function SubmitPanel() {
   /* ---- Form ---- */
   return (
     <div className="h-full bg-paper overflow-y-auto">
-      <div className="max-w-lg mx-auto px-6 py-10 space-y-8">
+      <div className="max-w-lg mx-auto px-6 pt-4 pb-10 space-y-8">
 
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="heading-display text-3xl text-charcoal">Submit Your Work</h1>
-          <KanthaDivider className="max-w-[160px] mx-auto" />
+        <div className="text-center mb-2 pt-10">
+          <h2 className="heading-display text-2xl sm:text-3xl lg:text-4xl text-charcoal">Submit Your Work</h2>
+          <KanthaDivider className="max-w-[200px] mx-auto" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

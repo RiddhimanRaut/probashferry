@@ -7,15 +7,15 @@
 
 ## Who reviews what
 
-| Category | Primary Reviewer |
-|---|---|
-| Essays (English) | Ritoja |
-| Essays (Bengali / Bilingual) | Srijan |
-| Art | Abhipsha |
-| Photography | Riddhiman |
-| All final decisions | Ritoja (Editor-in-Chief) |
+| Category | Primary Reviewer | Role |
+|---|---|---|
+| Essays (English), Prose, Poetry | Ritoja | Editor-in-Chief |
+| Essays (Bengali / Bilingual), Guest Columns | Srijan | Outreach Director |
+| Art | Abhipsha | Art & Design Director |
+| Photography | Riddhiman | Founder, Tech Lead, Co-Editor |
+| All final decisions | Ritoja | Editor-in-Chief |
 
-Pratyusha's role is not submission review — she handles outreach, branding, and how we communicate with our community. She should be looped in on anything that affects how we present the magazine publicly.
+Pratyusha (Social Media Head) does not review submissions. She handles Instagram, Facebook, branding, and community engagement. Loop her in on anything that affects how we present the magazine publicly.
 
 ---
 
