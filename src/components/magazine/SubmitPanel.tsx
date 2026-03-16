@@ -5,6 +5,52 @@ import KanthaDivider from "@/components/ui/KanthaDivider";
 import { useAuthContext } from "@/providers/AuthProvider";
 
 /* ------------------------------------------------------------------ */
+/*  Image compression                                                  */
+/* ------------------------------------------------------------------ */
+
+const MAX_DIMENSION = 2000;
+const JPEG_QUALITY = 0.92;
+const MAX_FILE_SIZE = 3.5 * 1024 * 1024; // 3.5MB
+
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    if (file.size <= MAX_FILE_SIZE && !file.type.includes("png")) {
+      resolve(file);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+      const w = Math.round(width * scale);
+      const h = Math.round(height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const name = file.name.replace(/\.\w+$/, ".jpg");
+            resolve(new File([blob], name, { type: "image/jpeg" }));
+          } else {
+            resolve(file);
+          }
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function compressFiles(files: File[]): Promise<File[]> {
+  return Promise.all(files.map((f) => (f.type.startsWith("image/") ? compressImage(f) : Promise.resolve(f))));
+}
+
+/* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -195,17 +241,25 @@ export default function SubmitPanel() {
 
     if (category === "Letters") {
       if (manuscript[0]) fd.append("manuscript", manuscript[0]);
-      if (cover[0]) fd.append("cover", cover[0]);
+      if (cover[0]) {
+        const [compressed] = await compressFiles([cover[0]]);
+        fd.append("cover", compressed);
+      }
     } else {
-      photos.forEach((p, i) => {
-        if (p.file) fd.append(`photo_${i}_file`, p.file);
+      for (let i = 0; i < photos.length; i++) {
+        const p = photos[i];
+        if (p.file) {
+          const [compressed] = await compressFiles([p.file]);
+          fd.append(`photo_${i}_file`, compressed);
+        }
         fd.append(`photo_${i}_caption`, p.caption);
         fd.append(`photo_${i}_title`, p.title);
         if (p.medium) fd.append(`photo_${i}_medium`, p.medium);
         if (category === "Comics" && comicType === "multi") {
-          p.panels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
+          const compressedPanels = await compressFiles(p.panels);
+          compressedPanels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
         }
-      });
+      }
     }
 
     try {
