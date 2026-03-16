@@ -8,13 +8,21 @@ const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!;
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 
+/** Parse the service account JSON, handling literal newlines in the private key. */
+function getServiceAccountCredentials() {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!.replace(/\n/g, "\\n");
+  return JSON.parse(raw);
+}
+
 function getDriveClient() {
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!);
-  const auth = new google.auth.GoogleAuth({
-    credentials,
-    scopes: ["https://www.googleapis.com/auth/drive"],
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_DRIVE_CLIENT_ID,
+    process.env.GOOGLE_DRIVE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
   });
-  return google.drive({ version: "v3", auth });
+  return google.drive({ version: "v3", auth: oauth2Client });
 }
 
 /** Verify a Firebase ID token and return the uid, or null if invalid. */
@@ -34,9 +42,8 @@ async function verifyIdToken(idToken: string): Promise<string | null> {
 
 /** Get a Firestore access token using the service account. */
 async function getFirestoreToken(): Promise<string> {
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!);
   const auth = new google.auth.GoogleAuth({
-    credentials,
+    credentials: getServiceAccountCredentials(),
     scopes: ["https://www.googleapis.com/auth/datastore"],
   });
   const client = await auth.getClient();
@@ -58,11 +65,15 @@ async function fsSetDoc(
   fields: Record<string, { stringValue: string }>,
   token: string
 ): Promise<void> {
-  await fetch(`${FS_BASE}/${path}`, {
+  const res = await fetch(`${FS_BASE}/${path}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ fields }),
   });
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`Firestore write failed (${res.status}):`, body);
+  }
 }
 
 async function findOrCreateFolder(
