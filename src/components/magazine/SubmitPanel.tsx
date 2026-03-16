@@ -145,14 +145,14 @@ export default function SubmitPanel() {
     if (category === "Comics") {
       if (!title.trim()) return false;
       const first = photos[0];
-      if (!first?.file) return false;
+      if (!first?.file || !first.caption.trim()) return false;
       if (comicType === "multi") return first.panels.length > 0;
       return true;
     }
-    // Photography / Art: no overall title needed, but each photo needs a title
+    // Photography / Art: each photo needs a title and caption
     const hasPhotos = photos.some((p) => p.file !== null);
-    const allTitled = photos.every((p) => !p.file || p.title.trim() !== "");
-    return hasPhotos && allTitled;
+    const allComplete = photos.every((p) => !p.file || (p.title.trim() !== "" && p.caption.trim() !== ""));
+    return hasPhotos && allComplete;
   })();
 
   function updatePhoto(index: number, patch: Partial<PhotoEntry>) {
@@ -363,7 +363,7 @@ export default function SubmitPanel() {
                     hint={category === "Photography" ? "JPEG or PNG. Min 1500px on longest side. sRGB." : "JPEG or PNG. Min 1500px. RGB colour mode."}
                     files={photo.file ? [photo.file] : []} onChange={(files) => updatePhoto(i, { file: files[0] ?? null })} />
                   <TextField label="Caption" value={photo.caption} onChange={(v) => updatePhoto(i, { caption: v })}
-                    placeholder="Caption for this image" />
+                    placeholder="Caption for this image" required />
                   <TextField label="Title" value={photo.title} onChange={(v) => updatePhoto(i, { title: v })}
                     placeholder="Title of this work" required />
                   {category === "Art" && (
@@ -414,7 +414,7 @@ export default function SubmitPanel() {
               )}
 
               <TextField label="Caption" value={photos[0].caption}
-                onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" />
+                onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" required />
             </div>
           )}
 
