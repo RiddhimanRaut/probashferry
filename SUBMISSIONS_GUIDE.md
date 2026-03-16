@@ -9,8 +9,8 @@
 
 | Category | Primary Reviewer | Role |
 |---|---|---|
-| Essays (English), Prose, Poetry | Ritoja | Editor-in-Chief |
-| Essays (Bengali / Bilingual), Guest Columns | Srijan | Outreach Director |
+| Letters (English), Prose, Poetry | Ritoja | Editor-in-Chief |
+| Letters (Bengali / Bilingual), Guest Columns | Srijan | Outreach Director |
 | Art | Abhipsha | Art & Design Director |
 | Photography | Riddhiman | Founder, Tech Lead, Co-Editor |
 | All final decisions | Ritoja | Editor-in-Chief |
@@ -57,7 +57,7 @@ Example:
 {
   "title": "The Last Train Home",
   "author": "Priya Das",
-  "category": "Essays",
+  "category": "Letters",
   "lang": "en",
   "flavor": "Memory",
   "type": "Prose"
@@ -68,14 +68,14 @@ Example:
 |---|---|
 | `title` | Title of the piece |
 | `author` | Their name (from their Google account) |
-| `category` | Essays / Photography / Art / Comics |
+| `category` | Letters / Photography / Art / Comics |
 | `lang` | `en` = English · `bn` = Bengali · `bil` = Bilingual |
 | `flavor` | Theme: Culture, Faith, Travel, Food, Identity, Memory, Belonging |
 | `type` | Format: Prose, Poem, Memoir, Essay, Fiction |
 
 ### Files by category
 
-**Essays:**
+**Letters:**
 - `manuscript.docx` — the full text in a Word file
 - `cover.jpg` (optional) — a suggested cover image
 
@@ -93,7 +93,7 @@ Example:
 
 ## How to review
 
-### Essays (Ritoja / Srijan)
+### Letters (Ritoja / Srijan)
 
 1. Open `manuscript.docx` via Google Docs
 2. Read the piece

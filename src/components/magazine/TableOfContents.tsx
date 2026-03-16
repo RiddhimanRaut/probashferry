@@ -7,10 +7,10 @@ import { ArticleMeta } from "@/types/article";
 import { tagColor } from "@/lib/tags";
 import { getDoc } from "@/lib/firebase/firestore-rest";
 
-const SECTIONS = ["Essays", "Photography", "Comics", "Art"] as const;
+const SECTIONS = ["Letters", "Photography", "Comics", "Art"] as const;
 
 export const SECTION_ICONS: Record<string, typeof PenLine> = {
-  Essays: PenLine,
+  Letters: PenLine,
   Photography: Camera,
   Comics: BookImage,
   Art: Palette,
@@ -322,7 +322,7 @@ export default function TableOfContents({ articles, editorial, articleOffset, cu
                     <PenLine size={16} className="opacity-50 shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Submit Your Work</p>
-                      <span className="text-xs text-charcoal/40">Essays, photography, art, comics</span>
+                      <span className="text-xs text-charcoal/40">Letters, photography, art, comics</span>
                     </div>
                   </button>
                 </div>

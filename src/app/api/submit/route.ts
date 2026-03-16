@@ -127,8 +127,8 @@ export async function POST(req: NextRequest) {
     if (!category || !author) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
-    // Essays and Comics require an overall title
-    if ((category === "Essays" || category === "Comics") && !title) {
+    // Letters and Comics require an overall title
+    if ((category === "Letters" || category === "Comics") && !title) {
       return NextResponse.json({ error: "Title is required." }, { status: 400 });
     }
 
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
     if (type) meta.type = type;
 
     // Handle per-category files
-    if (category === "Essays") {
+    if (category === "Letters") {
       const manuscript = formData.get("manuscript") as File | null;
       if (!manuscript) return NextResponse.json({ error: "Manuscript file required." }, { status: 400 });
       const buf = Buffer.from(await manuscript.arrayBuffer());

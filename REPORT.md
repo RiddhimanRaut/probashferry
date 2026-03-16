@@ -36,11 +36,11 @@ Current state of the project as of March 2026. Update this file when major featu
 
 **Content pipeline**
 - MDX files in `content/articles/en/` parsed at build time
-- Category order: Essays → Photography → Comics → Art
+- Category order: Letters → Photography → Comics → Art
 - Image compression: `npm run images` (ffmpeg, ~quality 85) + pre-commit hook auto-compresses staged JPEGs
 
 **Submission pipeline**
-- Reader-facing form: `SubmitPanel.tsx` — auth-gated, category-adaptive, supports Essays (docx + cover), Photography/Art (up to 3 images), Comics (single or multi-panel)
+- Reader-facing form: `SubmitPanel.tsx` — auth-gated, category-adaptive, supports Letters (docx + cover), Photography/Art (up to 3 images), Comics (single or multi-panel)
 - Serverless API: `src/app/api/submit/route.ts` — verifies Firebase ID token, checks Firestore for duplicate, uploads to Google Drive via service account, records submission in Firestore
 - Duplicate prevention: one submission per user per category per issue, enforced by Firestore doc at `submissions/{uid}_{category}_{issue}`
 - Drive structure: `submissions/{issue}/pending/` → `accepted/` → `published/`
@@ -86,7 +86,7 @@ Needed to distinguish single-tap (open viewer) from double-tap (like). Without t
 ## Content in the magazine (as of March 2026)
 
 - Editorial (letter from the editors)
-- Essays: 1 piece (Brick Lane)
+- Letters: 1 piece (Brick Lane)
 - Photography: placeholder
 - Comics: Pepper & Carrot (CC BY 4.0), xkcd strips (CC BY-NC 2.5)
 - Art: placeholder

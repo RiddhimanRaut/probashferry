@@ -9,7 +9,7 @@ import { calculateReadingTime } from "./utils";
 const articlesDirectory = path.join(process.cwd(), "content/articles");
 
 const CATEGORY_ORDER: Record<string, number> = {
-  Essays: 0,
+  Letters: 0,
   Photography: 1,
   Comics: 2,
   Art: 3,

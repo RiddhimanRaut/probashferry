@@ -8,7 +8,7 @@ import { useAuthContext } from "@/providers/AuthProvider";
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Category = "Essays" | "Photography" | "Art" | "Comics";
+type Category = "Letters" | "Photography" | "Art" | "Comics";
 type ComicType = "single" | "multi";
 
 interface PhotoEntry {
@@ -19,12 +19,12 @@ interface PhotoEntry {
   panels: File[];
 }
 
-const CATEGORIES: Category[] = ["Essays", "Photography", "Art", "Comics"];
+const CATEGORIES: Category[] = ["Letters", "Photography", "Art", "Comics"];
 const FLAVOR_TAGS = ["Culture", "Faith", "Travel", "Food", "Identity", "Memory", "Belonging"];
 const TYPE_TAGS = ["Prose", "Poem", "Memoir", "Essay", "Fiction"];
 
 const FORMAT_HINTS: Record<Category, string[]> = {
-  Essays: [
+  Letters: [
     "Submit as .docx (Word file).",
     "Bengali text must be typed Unicode — not a scan or image of text.",
     "One submission per issue.",
@@ -121,7 +121,7 @@ export default function SubmitPanel() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [category, setCategory] = useState<Category>("Essays");
+  const [category, setCategory] = useState<Category>("Letters");
   const [title, setTitle] = useState("");
   const [lang, setLang] = useState<"en" | "bn" | "bil">("en");
   const [flavor, setFlavor] = useState("");
@@ -141,7 +141,7 @@ export default function SubmitPanel() {
   const photoLimit = category === "Comics" ? 1 : 3;
 
   const isFormValid = (() => {
-    if (category === "Essays") return title.trim() !== "" && manuscript.length > 0;
+    if (category === "Letters") return title.trim() !== "" && manuscript.length > 0;
     if (category === "Comics") {
       if (!title.trim()) return false;
       const first = photos[0];
@@ -193,7 +193,7 @@ export default function SubmitPanel() {
     if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
     if (type) fd.append("type", type);
 
-    if (category === "Essays") {
+    if (category === "Letters") {
       if (manuscript[0]) fd.append("manuscript", manuscript[0]);
       if (cover[0]) fd.append("cover", cover[0]);
     } else {
@@ -293,7 +293,7 @@ export default function SubmitPanel() {
 
           {/* Common fields */}
           <div className="space-y-5">
-            {(category === "Essays" || category === "Comics") && (
+            {(category === "Letters" || category === "Comics") && (
               <TextField label="Title" value={title} onChange={setTitle} placeholder="Your title" required />
             )}
             <div className="font-body text-xs text-charcoal/50">
@@ -301,8 +301,8 @@ export default function SubmitPanel() {
             </div>
           </div>
 
-          {/* Essays */}
-          {category === "Essays" && (
+          {/* Letters */}
+          {category === "Letters" && (
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">Language</label>

@@ -28,7 +28,7 @@ author: "Author Name"
 date: "2025-11-01"
 excerpt: "One sentence teaser shown in the table of contents."
 coverImage: "/images/bricklane-thumb.jpg"
-category: "Essays"
+category: "Letters"
 flavor: "Culture"
 type: "Prose"
 ---
@@ -132,7 +132,7 @@ Valid tag values are defined in `src/lib/tags.ts`. Add new ones there if needed.
 
 Articles appear in this order regardless of filename:
 
-1. **Essays** — sorted by date, newest first
+1. **Letters** — sorted by date, newest first
 2. **Photography**
 3. **Comics**
 4. **Art**

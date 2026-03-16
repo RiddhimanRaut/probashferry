@@ -93,9 +93,9 @@ One document per comment.
 - `createdAt` — ISO timestamp
 
 ### `submissions/{key}`
-One document per submission. Key format: `{uid}_{category}_{issue}` (e.g. `abc123_Essays_issue-01`).
+One document per submission. Key format: `{uid}_{category}_{issue}` (e.g. `abc123_Letters_issue-01`).
 - `uid` — Firebase UID of the submitter
-- `category` — Essays / Photography / Art / Comics
+- `category` — Letters / Photography / Art / Comics
 - `issue` — active issue ID (e.g. `issue-01`)
 - `slug` — the Drive folder name for their files
 - `submittedAt` — ISO timestamp

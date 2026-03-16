@@ -23,7 +23,7 @@ Probashferry is a digital magazine for the Bengali diaspora, built as a Next.js 
 
 ### Content Pipeline
 
-MDX files in `content/articles/en/` → `src/lib/articles.ts` parses with gray-matter + remark → `Article[]` sorted by category order (Essays → Photography → Comics → Art), then by date → passed to MagazineViewer.
+MDX files in `content/articles/en/` → `src/lib/articles.ts` parses with gray-matter + remark → `Article[]` sorted by category order (Letters → Photography → Comics → Art), then by date → passed to MagazineViewer.
 
 Each article's `category` field determines which panel component renders it. The `photos` array (with optional `panels` for multi-image carousels) drives gallery sections.
 
@@ -86,7 +86,7 @@ Active issue is read from `content/config.json` (`activeIssue` field). Changing 
 
 ### Table of Contents (`TableOfContents.tsx`)
 
-Sections are defined in `SECTIONS` constant (Essays, Photography, Comics, Art). The expand chevron is hidden for single-content sections (Photography, Comics, Art). "Coming Soon" badge appears automatically when a section has no articles.
+Sections are defined in `SECTIONS` constant (Letters, Photography, Comics, Art). The expand chevron is hidden for single-content sections (Photography, Comics, Art). "Coming Soon" badge appears automatically when a section has no articles.
 
 ## Styling
 
