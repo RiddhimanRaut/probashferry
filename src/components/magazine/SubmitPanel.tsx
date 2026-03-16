@@ -103,12 +103,14 @@ const FORMAT_HINTS: Record<Category, string[]> = {
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
-function TagPicker({ label, options, value, onChange }: {
-  label: string; options: string[]; value: string; onChange: (v: string) => void;
+function TagPicker({ label, options, value, onChange, required }: {
+  label: string; options: string[]; value: string; onChange: (v: string) => void; required?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">{label}</label>
+      <label className="font-body text-xs text-charcoal/50 uppercase tracking-widest">
+        {label}{required && <span className="text-sindoor ml-0.5">*</span>}
+      </label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
           <button key={opt} type="button" onClick={() => onChange(value === opt ? "" : opt)}
@@ -190,18 +192,28 @@ export default function SubmitPanel() {
 
   const photoLimit = category === "Comics" ? 1 : 3;
 
+  const effectiveFlavor = customFlavor.trim() || flavor;
+
   const isFormValid = (() => {
-    if (category === "Letters") return title.trim() !== "" && manuscript.length > 0;
+    if (category === "Letters") {
+      return title.trim() !== "" && manuscript.length > 0 && !!effectiveFlavor && !!type;
+    }
     if (category === "Comics") {
       if (!title.trim()) return false;
       const first = photos[0];
-      if (!first?.file || !first.caption.trim()) return false;
+      if (!first?.file || !first.caption.trim() || !first.flavor.trim()) return false;
       if (comicType === "multi") return first.panels.length > 0;
       return true;
     }
-    // Photography / Art: each photo needs a title and caption; Art also needs medium
+    // Photography / Art: each photo needs title, caption, flavor, type; Art also needs medium
     const hasPhotos = photos.some((p) => p.file !== null);
-    const allComplete = photos.every((p) => !p.file || (p.title.trim() !== "" && p.caption.trim() !== "" && (category !== "Art" || p.medium.trim() !== "")));
+    const allComplete = photos.every((p) => !p.file || (
+      p.title.trim() !== "" &&
+      p.caption.trim() !== "" &&
+      p.flavor.trim() !== "" &&
+      p.type.trim() !== "" &&
+      (category !== "Art" || p.medium.trim() !== "")
+    ));
     return hasPhotos && allComplete;
   })();
 
@@ -239,7 +251,6 @@ export default function SubmitPanel() {
     if (title) fd.append("title", title);
     fd.append("author", author);
     fd.append("lang", lang);
-    const effectiveFlavor = customFlavor.trim() || flavor;
     if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
     if (type) fd.append("type", type);
 
@@ -382,9 +393,9 @@ export default function SubmitPanel() {
                   ))}
                 </div>
               </div>
-              <TagPicker label="Type" options={TYPE_TAGS} value={type} onChange={setType} />
+              <TagPicker label="Type" options={TYPE_TAGS} value={type} onChange={setType} required />
               <div className="space-y-2">
-                <TagPicker label="Flavor" options={FLAVOR_TAGS}
+                <TagPicker label="Flavor" options={FLAVOR_TAGS} required
                   value={customFlavor ? "" : flavor}
                   onChange={(v) => { setFlavor(v); setCustomFlavor(""); }} />
                 <input type="text" value={customFlavor}
@@ -435,10 +446,17 @@ export default function SubmitPanel() {
                     <TextField label="Medium" value={photo.medium} onChange={(v) => updatePhoto(i, { medium: v })}
                       placeholder="e.g. Oil on canvas, Digital illustration" required />
                   )}
-                  <TagPicker label="Flavor" options={FLAVOR_TAGS} value={photo.flavor}
-                    onChange={(v) => updatePhoto(i, { flavor: v })} />
                   <div className="space-y-2">
-                    <TagPicker label="Type" options={category === "Photography" ? PHOTO_TYPE_TAGS : ART_TYPE_TAGS} value={photo.type}
+                    <TagPicker label="Flavor" options={FLAVOR_TAGS} required
+                      value={FLAVOR_TAGS.includes(photo.flavor) ? photo.flavor : ""}
+                      onChange={(v) => updatePhoto(i, { flavor: v })} />
+                    <input type="text" value={!FLAVOR_TAGS.includes(photo.flavor) ? photo.flavor : ""}
+                      onChange={(e) => updatePhoto(i, { flavor: e.target.value.replace(/\s/g, "") })}
+                      placeholder="Or type your own (one word)"
+                      className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
+                  </div>
+                  <div className="space-y-2">
+                    <TagPicker label="Type" options={category === "Photography" ? PHOTO_TYPE_TAGS : ART_TYPE_TAGS} value={photo.type} required
                       onChange={(v) => updatePhoto(i, { type: v })} />
                     <input type="text" value={photo.type && ![...PHOTO_TYPE_TAGS, ...ART_TYPE_TAGS].includes(photo.type) ? photo.type : ""}
                       onChange={(e) => updatePhoto(i, { type: e.target.value.replace(/\s/g, "") })}
@@ -490,8 +508,15 @@ export default function SubmitPanel() {
 
               <TextField label="Caption" value={photos[0].caption}
                 onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" required />
-              <TagPicker label="Flavor" options={FLAVOR_TAGS} value={photos[0].flavor}
-                onChange={(v) => updatePhoto(0, { flavor: v })} />
+              <div className="space-y-2">
+                <TagPicker label="Flavor" options={FLAVOR_TAGS} required
+                  value={FLAVOR_TAGS.includes(photos[0].flavor) ? photos[0].flavor : ""}
+                  onChange={(v) => updatePhoto(0, { flavor: v })} />
+                <input type="text" value={!FLAVOR_TAGS.includes(photos[0].flavor) ? photos[0].flavor : ""}
+                  onChange={(e) => updatePhoto(0, { flavor: e.target.value.replace(/\s/g, "") })}
+                  placeholder="Or type your own (one word)"
+                  className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
+              </div>
             </div>
           )}
 
