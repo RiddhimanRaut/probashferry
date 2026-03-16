@@ -85,7 +85,7 @@ async function findOrCreateFolder(
   parentId: string
 ): Promise<string> {
   const res = await drive.files.list({
-    q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: `name='${name.replace(/'/g, "\\'")}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
   });
   if (res.data.files?.length) return res.data.files[0].id!;
@@ -242,7 +242,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, slug });
   } catch (err) {
-    console.error("Submit error:", err);
-    return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
+    const errMsg = err instanceof Error ? `${err.message} | ${err.stack?.split("\n")[1]?.trim()}` : String(err);
+    console.error("Submit error:", errMsg);
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
