@@ -161,14 +161,7 @@ export async function POST(req: NextRequest) {
         meta.coverImage = `cover.${cover.name.split(".").pop()}`;
       }
     } else {
-      // Photography, Art, Comics
-      const cover = formData.get("cover") as File | null;
-      if (!cover) return NextResponse.json({ error: "Cover image required." }, { status: 400 });
-      const cbuf = Buffer.from(await cover.arrayBuffer());
-      const coverExt = cover.name.split(".").pop();
-      await uploadFile(drive, `cover.${coverExt}`, cover.type, cbuf, submissionFolder);
-      meta.coverImage = `cover.${coverExt}`;
-
+      // Photography, Art, Comics — no cover required (editors select from submitted photos)
       // Individual photos/panels
       const photos: Record<string, unknown>[] = [];
       let i = 0;

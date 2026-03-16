@@ -30,7 +30,7 @@ const FORMAT_HINTS: Record<Category, string[]> = {
     "One submission per issue.",
   ],
   Photography: [
-    "JPEG only. Minimum 1500px on the longest side.",
+    "JPEG or PNG. Minimum 1500px on the longest side.",
     "sRGB colour space. No RAW or HEIC files.",
     "Submit up to 3 photos. We select one for publication.",
     "One submission per issue.",
@@ -356,7 +356,7 @@ export default function SubmitPanel() {
                     )}
                   </div>
                   <FileButton label="Image" accept="image/jpeg,image/png" required={i === 0}
-                    hint={category === "Photography" ? "JPEG only. Min 1500px on longest side. sRGB." : "JPEG or PNG. Min 1500px. RGB colour mode."}
+                    hint={category === "Photography" ? "JPEG or PNG. Min 1500px on longest side. sRGB." : "JPEG or PNG. Min 1500px. RGB colour mode."}
                     files={photo.file ? [photo.file] : []} onChange={(files) => updatePhoto(i, { file: files[0] ?? null })} />
                   <TextField label="Caption" value={photo.caption} onChange={(v) => updatePhoto(i, { caption: v })}
                     placeholder="Caption for this image" />
