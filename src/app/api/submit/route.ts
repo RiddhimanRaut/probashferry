@@ -115,9 +115,8 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const idToken = formData.get("idToken") as string | null;
     const category = formData.get("category") as string;
-    const title = formData.get("title") as string;
+    const title = (formData.get("title") as string) || "";
     const author = formData.get("author") as string;
-    const excerpt = formData.get("excerpt") as string;
     const lang = (formData.get("lang") as string) || "en";
     const flavor = formData.get("flavor") as string | null;
     const type = formData.get("type") as string | null;
@@ -125,8 +124,12 @@ export async function POST(req: NextRequest) {
     if (!idToken) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
-    if (!category || !title || !author || !excerpt) {
+    if (!category || !author) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+    // Essays and Comics require an overall title
+    if ((category === "Essays" || category === "Comics") && !title) {
+      return NextResponse.json({ error: "Title is required." }, { status: 400 });
     }
 
     // Verify Firebase ID token
@@ -153,12 +156,18 @@ export async function POST(req: NextRequest) {
     const pendingFolder = await findOrCreateFolder(drive, "pending", issueFolder);
     const categoryFolder = await findOrCreateFolder(drive, category, pendingFolder);
 
-    // Human-readable folder name: author_title
-    const slug = `${author.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}_${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`;
+    // Human-readable folder name: author_title_uid (uid suffix for uniqueness)
+    // Keep Unicode letters (Bengali, etc.), strip only punctuation and special chars
+    // eslint-disable-next-line no-control-regex
+    const slugify = (s: string, max: number) => s.toLowerCase().replace(/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, "-").replace(/^-|-$/g, "").slice(0, max);
+    const authorSlug = slugify(author, 30);
+    const titleSlug = title ? `_${slugify(title, 40)}` : "";
+    const slug = `${authorSlug}${titleSlug}_${uid.slice(-6)}`;
     const submissionFolder = await findOrCreateFolder(drive, slug, categoryFolder);
 
     // Build meta.json
-    const meta: Record<string, unknown> = { title, author, excerpt, category, lang };
+    const meta: Record<string, unknown> = { author, category, lang };
+    if (title) meta.title = title;
     if (flavor) meta.flavor = flavor;
     if (type) meta.type = type;
 

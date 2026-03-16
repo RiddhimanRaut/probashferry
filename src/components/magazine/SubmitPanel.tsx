@@ -141,15 +141,18 @@ export default function SubmitPanel() {
   const photoLimit = category === "Comics" ? 1 : 3;
 
   const isFormValid = (() => {
-    if (!title.trim()) return false;
-    if (category === "Essays") return manuscript.length > 0;
+    if (category === "Essays") return title.trim() !== "" && manuscript.length > 0;
     if (category === "Comics") {
+      if (!title.trim()) return false;
       const first = photos[0];
       if (!first?.file) return false;
       if (comicType === "multi") return first.panels.length > 0;
       return true;
     }
-    return photos.some((p) => p.file !== null);
+    // Photography / Art: no overall title needed, but each photo needs a title
+    const hasPhotos = photos.some((p) => p.file !== null);
+    const allTitled = photos.every((p) => !p.file || p.title.trim() !== "");
+    return hasPhotos && allTitled;
   })();
 
   function updatePhoto(index: number, patch: Partial<PhotoEntry>) {
@@ -183,9 +186,8 @@ export default function SubmitPanel() {
     const fd = new FormData();
     fd.append("idToken", idToken);
     fd.append("category", category);
-    fd.append("title", title);
+    if (title) fd.append("title", title);
     fd.append("author", author);
-    fd.append("excerpt", title);
     fd.append("lang", lang);
     const effectiveFlavor = customFlavor.trim() || flavor;
     if (effectiveFlavor) fd.append("flavor", effectiveFlavor);
@@ -291,7 +293,9 @@ export default function SubmitPanel() {
 
           {/* Common fields */}
           <div className="space-y-5">
-            <TextField label="Title" value={title} onChange={setTitle} placeholder="Your title" required />
+            {(category === "Essays" || category === "Comics") && (
+              <TextField label="Title" value={title} onChange={setTitle} placeholder="Your title" required />
+            )}
             <div className="font-body text-xs text-charcoal/50">
               Submitting as <span className="text-charcoal font-medium">{author}</span>
             </div>
@@ -360,8 +364,8 @@ export default function SubmitPanel() {
                     files={photo.file ? [photo.file] : []} onChange={(files) => updatePhoto(i, { file: files[0] ?? null })} />
                   <TextField label="Caption" value={photo.caption} onChange={(v) => updatePhoto(i, { caption: v })}
                     placeholder="Caption for this image" />
-                  <TextField label="Title (optional)" value={photo.title} onChange={(v) => updatePhoto(i, { title: v })}
-                    placeholder="Individual title" />
+                  <TextField label="Title" value={photo.title} onChange={(v) => updatePhoto(i, { title: v })}
+                    placeholder="Title of this work" required />
                   {category === "Art" && (
                     <TextField label="Medium" value={photo.medium} onChange={(v) => updatePhoto(i, { medium: v })}
                       placeholder="e.g. Oil on canvas, Digital illustration" />
