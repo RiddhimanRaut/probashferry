@@ -62,12 +62,16 @@ interface PhotoEntry {
   caption: string;
   title: string;
   medium: string;
+  flavor: string;
+  type: string;
   panels: File[];
 }
 
 const CATEGORIES: Category[] = ["Letters", "Photography", "Art", "Comics"];
 const FLAVOR_TAGS = ["Culture", "Faith", "Travel", "Food", "Identity", "Memory", "Belonging"];
 const TYPE_TAGS = ["Prose", "Poem", "Memoir", "Essay", "Fiction"];
+const PHOTO_TYPE_TAGS = ["Street", "Portrait", "Documentary", "Landscape", "Abstract"];
+const ART_TYPE_TAGS = ["Painting", "Sketch", "Digital", "Mixed", "Sculpture"];
 
 const FORMAT_HINTS: Record<Category, string[]> = {
   Letters: [
@@ -176,7 +180,7 @@ export default function SubmitPanel() {
   const [manuscript, setManuscript] = useState<File[]>([]);
   const [cover, setCover] = useState<File[]>([]);
   const [photos, setPhotos] = useState<PhotoEntry[]>([
-    { file: null, caption: "", title: "", medium: "", panels: [] },
+    { file: null, caption: "", title: "", medium: "", flavor: "", type: "", panels: [] },
   ]);
   const [comicType, setComicType] = useState<ComicType>("single");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -195,9 +199,9 @@ export default function SubmitPanel() {
       if (comicType === "multi") return first.panels.length > 0;
       return true;
     }
-    // Photography / Art: each photo needs a title and caption
+    // Photography / Art: each photo needs a title and caption; Art also needs medium
     const hasPhotos = photos.some((p) => p.file !== null);
-    const allComplete = photos.every((p) => !p.file || (p.title.trim() !== "" && p.caption.trim() !== ""));
+    const allComplete = photos.every((p) => !p.file || (p.title.trim() !== "" && p.caption.trim() !== "" && (category !== "Art" || p.medium.trim() !== "")));
     return hasPhotos && allComplete;
   })();
 
@@ -207,7 +211,7 @@ export default function SubmitPanel() {
 
   function addPhoto() {
     if (photos.length >= photoLimit) return;
-    setPhotos((prev) => [...prev, { file: null, caption: "", title: "", medium: "", panels: [] }]);
+    setPhotos((prev) => [...prev, { file: null, caption: "", title: "", medium: "", flavor: "", type: "", panels: [] }]);
   }
 
   function removePhoto(index: number) {
@@ -255,6 +259,12 @@ export default function SubmitPanel() {
         fd.append(`photo_${i}_caption`, p.caption);
         fd.append(`photo_${i}_title`, p.title);
         if (p.medium) fd.append(`photo_${i}_medium`, p.medium);
+        if (p.flavor) fd.append(`photo_${i}_flavor`, p.flavor);
+        if (category === "Comics") {
+          fd.append(`photo_${i}_type`, comicType === "single" ? "Strip" : "Multi-panel");
+        } else if (p.type) {
+          fd.append(`photo_${i}_type`, p.type);
+        }
         if (category === "Comics" && comicType === "multi") {
           const compressedPanels = await compressFiles(p.panels);
           compressedPanels.forEach((panel, pi) => fd.append(`photo_${i}_panel_${pi}`, panel));
@@ -423,8 +433,18 @@ export default function SubmitPanel() {
                     placeholder="Title of this work" required />
                   {category === "Art" && (
                     <TextField label="Medium" value={photo.medium} onChange={(v) => updatePhoto(i, { medium: v })}
-                      placeholder="e.g. Oil on canvas, Digital illustration" />
+                      placeholder="e.g. Oil on canvas, Digital illustration" required />
                   )}
+                  <TagPicker label="Flavor" options={FLAVOR_TAGS} value={photo.flavor}
+                    onChange={(v) => updatePhoto(i, { flavor: v })} />
+                  <div className="space-y-2">
+                    <TagPicker label="Type" options={category === "Photography" ? PHOTO_TYPE_TAGS : ART_TYPE_TAGS} value={photo.type}
+                      onChange={(v) => updatePhoto(i, { type: v })} />
+                    <input type="text" value={photo.type && ![...PHOTO_TYPE_TAGS, ...ART_TYPE_TAGS].includes(photo.type) ? photo.type : ""}
+                      onChange={(e) => updatePhoto(i, { type: e.target.value.replace(/\s/g, "") })}
+                      placeholder="Or type your own (one word)"
+                      className="w-full bg-transparent border-b border-charcoal/20 py-1.5 text-sm font-body text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-charcoal/50 transition-colors" />
+                  </div>
                 </div>
               ))}
 
@@ -448,7 +468,7 @@ export default function SubmitPanel() {
                       className={`px-4 py-1.5 rounded-full text-xs font-body border transition-colors ${
                         comicType === t ? "bg-terracotta text-paper border-terracotta" : "bg-transparent text-charcoal/60 border-charcoal/20 hover:border-terracotta/40"
                       }`}>
-                      {t === "single" ? "Single panel" : "Multi-panel"}
+                      {t === "single" ? "Strip" : "Multi-panel"}
                     </button>
                   ))}
                 </div>
@@ -470,6 +490,8 @@ export default function SubmitPanel() {
 
               <TextField label="Caption" value={photos[0].caption}
                 onChange={(v) => updatePhoto(0, { caption: v })} placeholder="e.g. Episode 1: The Beginning" required />
+              <TagPicker label="Flavor" options={FLAVOR_TAGS} value={photos[0].flavor}
+                onChange={(v) => updatePhoto(0, { flavor: v })} />
             </div>
           )}
 

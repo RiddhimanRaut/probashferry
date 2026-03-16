@@ -194,6 +194,8 @@ export async function POST(req: NextRequest) {
         const caption = (formData.get(`photo_${i}_caption`) as string) || "";
         const photoTitle = (formData.get(`photo_${i}_title`) as string) || "";
         const medium = (formData.get(`photo_${i}_medium`) as string) || undefined;
+        const photoFlavor = (formData.get(`photo_${i}_flavor`) as string) || undefined;
+        const photoType = (formData.get(`photo_${i}_type`) as string) || undefined;
         const ext = file.name.split(".").pop();
         const filename = `photo_${String(i).padStart(2, "0")}.${ext}`;
         const buf = Buffer.from(await file.arrayBuffer());
@@ -202,6 +204,8 @@ export async function POST(req: NextRequest) {
         const photoEntry: Record<string, unknown> = { src: filename, caption };
         if (photoTitle) photoEntry.title = photoTitle;
         if (medium) photoEntry.medium = medium;
+        if (photoFlavor) photoEntry.flavor = photoFlavor;
+        if (photoType) photoEntry.type = photoType;
 
         // Comics panels
         const panels: string[] = [];
