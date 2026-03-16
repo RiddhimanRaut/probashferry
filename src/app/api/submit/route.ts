@@ -10,9 +10,9 @@ const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT
 
 /** Parse the service account JSON, handling both real newlines and escaped \n. */
 function getServiceAccountCredentials() {
-  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!;
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!;
   // Try parsing as-is first (works when env var has escaped \n)
-  try { return JSON.parse(raw); } catch {}
+  try { return JSON.parse(raw); } catch { /* fall through */ }
   // Replace real newlines with escaped \n (works when env var has literal newlines)
   return JSON.parse(raw.replace(/\n/g, "\\n"));
 }
